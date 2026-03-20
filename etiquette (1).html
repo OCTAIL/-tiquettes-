@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Étiquette Produit</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .controls {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
+  .controls label { font-weight: bold; }
+  .controls input[type=number] {
+    width: 58px;
+    padding: 4px 8px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .controls button {
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .controls button:hover { background: #2a2a4e; }
+
+  /* Étiquette écran — proportions 8.1 x 4.1 cm à ~96dpi */
+  .label {
+    width: 307px;
+    height: 155px;
+    background: #fff;
+    border: 0.75px solid #000;
+    padding: 4px 5px 3px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  /* LIGNE 1 : Nom produit (gauche) + Poids net (droite) */
+  .entete {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 0.5px solid #000;
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+    gap: 4px;
+  }
+  .nom-produit {
+    font-size: 8.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    line-height: 1.15;
+    flex: 1;
+  }
+  .poids-bloc {
+    font-size: 6.5pt;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+  }
+  .poids-ligne {
+    display: inline-block;
+    min-width: 38px;
+    border-bottom: 0.5px solid #000;
+  }
+
+  /* CORPS : ingrédients, allergènes, valeurs nutritionnelles */
+  .corps {
+    font-size: 6pt;
+    line-height: 1.28;
+    flex: 1;
+    overflow: hidden;
+  }
+  .corps .allergenes { font-style: italic; }
+
+  /* FABRICANT */
+  .fabricant {
+    font-size: 5.5pt;
+    line-height: 1.2;
+    border-top: 0.5px solid #000;
+    padding-top: 2px;
+    margin-top: 2px;
+  }
+
+  /* PIED : Lot (gauche) + DLUO (droite) */
+  .pied {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-top: 0.5px solid #000;
+    padding-top: 2px;
+    margin-top: 2px;
+    font-size: 6pt;
+    gap: 6px;
+  }
+  .pied .champ { display: flex; flex-direction: column; gap: 0px; }
+  .pied .champ strong { font-weight: bold; }
+  .pied .champ .valeur { font-size: 6pt; word-break: break-all; line-height: 1.2; }
+
+  /* IMPRESSION */
+  @media print {
+    body  { background: none; padding: 0; gap: 0; }
+    .controls { display: none; }
+
+    .label {
+      width: 8.1cm;
+      height: 4.1cm;
+      border: none;
+      padding: 1.8mm 2.2mm 1.5mm 2.2mm;
+      page-break-after: always;
+      margin: 0;
+    }
+    .label:last-child { page-break-after: avoid; }
+
+    .nom-produit  { font-size: 7.5pt; }
+    .poids-bloc   { font-size: 6pt;   }
+    .corps        { font-size: 6pt;   }
+    .fabricant    { font-size: 5pt;   }
+    .pied         { font-size: 6pt;   }
+    .pied .champ .valeur { font-size: 6pt; }
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <label for="nb">Nombre d'étiquettes :</label>
+  <input type="number" id="nb" value="1" min="1" max="200">
+  <button onclick="imprimer()">🖨️ Imprimer</button>
+</div>
+
+<div id="preview"></div>
+
+<script>
+  function param(name, fallback) {
+    const p = new URLSearchParams(window.location.search).get(name);
+    return p ? decodeURIComponent(p) : fallback;
+  }
+
+  const nomProduit  = param('nom',         'CRÈME DE NOUGAT');
+  const ingredients = param('ingredients', "Ingrédients : sucre, sirop de glucose, miel de lavande, blanc d'œufs en poudre, eau, agent de texture E406, arôme vanille");
+  const allergenes  = param('allergenes',  'Allergènes : amandes, sulfites');
+  const valeurs     = param('valeurs',     'Valeurs nutritionnelles moyennes (pour 100g) : Énergie : 1973 Kj / 473 kcal, glucides : 38,1g dont sucres : 37,49g, Matières grasses : 32,86g dont acides gras saturés : 2,02g, protéines : 12,08g / sel : 0,01g');
+  const lot         = param('lot',         'LOT-20260319-1732-NOUGAT TRADITION');
+  const dluo        = param('dluo',        '19/03/2027');
+
+  function buildLabel() {
+    return `
+    <div class="label">
+      <div class="entete">
+        <div class="nom-produit">${nomProduit}</div>
+        <div class="poids-bloc"><strong>Poids net :&nbsp;</strong><span class="poids-ligne">&nbsp;</span></div>
+      </div>
+      <div class="corps">
+        <div>${ingredients}</div>
+        <div class="allergenes">${allergenes}</div>
+        <div>${valeurs}</div>
+      </div>
+      <div class="fabricant">Fabriqué en France par : Confiseries des Monts du Vaucluse, chemin de Gourdon, 84500 Bollène.</div>
+      <div class="pied">
+        <div class="champ"><strong>Lot :</strong><span class="valeur">${lot.replace(/^LOT-/, '')}</span></div>
+        <div class="champ"><strong>À consommer de préférence avant :</strong><span class="valeur">${dluo}</span></div>
+      </div>
+    </div>`;
+  }
+
+  function renderPreview() {
+    const n = parseInt(document.getElementById('nb').value) || 1;
+    let html = '';
+    for (let i = 0; i < Math.min(n, 5); i++) html += buildLabel();
+    document.getElementById('preview').innerHTML = html;
+  }
+
+  document.getElementById('nb').addEventListener('input', renderPreview);
+  renderPreview();
+
+  function imprimer() {
+    const n = parseInt(document.getElementById('nb').value) || 1;
+    let html = '';
+    for (let i = 0; i < n; i++) html += buildLabel();
+    document.getElementById('preview').innerHTML = html;
+    setTimeout(() => window.print(), 150);
+  }
+</script>
+</body>
+</html>
