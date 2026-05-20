@@ -48,7 +48,6 @@
   }
   .controls button:hover { background: #2a2a4e; }
 
-  /* Étiquette écran — proportions 8.1 x 4.1 cm à ~96dpi */
   .label {
     width: 307px;
     height: 155px;
@@ -61,7 +60,6 @@
     overflow: hidden;
   }
 
-  /* LIGNE 1 : Nom produit (gauche) + Poids net (droite) */
   .entete {
     display: flex;
     justify-content: space-between;
@@ -93,7 +91,6 @@
     border-bottom: 0.5px solid #000;
   }
 
-  /* CORPS : ingrédients, allergènes, valeurs nutritionnelles */
   .corps {
     font-size: 6pt;
     line-height: 1.28;
@@ -102,7 +99,6 @@
   }
   .corps .allergenes { font-style: italic; }
 
-  /* FABRICANT */
   .fabricant {
     font-size: 5.5pt;
     line-height: 1.2;
@@ -111,7 +107,6 @@
     margin-top: 2px;
   }
 
-  /* PIED : Lot (gauche) + DLUO (droite) */
   .pied {
     display: flex;
     justify-content: space-between;
@@ -126,7 +121,6 @@
   .pied .champ strong { font-weight: bold; }
   .pied .champ .valeur { font-size: 6pt; word-break: break-all; line-height: 1.2; }
 
-  /* IMPRESSION */
   @media print {
     body  { background: none; padding: 0; gap: 0; }
     .controls { display: none; }
@@ -172,13 +166,14 @@
   const valeurs     = param('valeurs',     'Valeurs nutritionnelles moyennes (pour 100g) : Énergie : 1973 Kj / 473 kcal, glucides : 38,1g dont sucres : 37,49g, Matières grasses : 32,86g dont acides gras saturés : 2,02g, protéines : 12,08g / sel : 0,01g');
   const lot         = param('lot',         'LOT-20260319-1732-NOUGAT TRADITION');
   const dluo        = param('dluo',        '19/03/2027');
+  const poids       = param('poids',       '');
 
   function buildLabel() {
     return `
     <div class="label">
       <div class="entete">
         <div class="nom-produit">${nomProduit}</div>
-        <div class="poids-bloc"><strong>Poids net :&nbsp;</strong><span class="poids-ligne">&nbsp;</span></div>
+        <div class="poids-bloc"><strong>Poids net environ :&nbsp;</strong><span class="poids-ligne">${poids}&nbsp;</span></div>
       </div>
       <div class="corps">
         <div>${ingredients}</div>
