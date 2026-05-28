@@ -28,7 +28,20 @@
       color: #c4973a;
       white-space: nowrap;
     }
+
+    /* Impression : l'étiquette remplit toute la page, sans marge.
+       La taille de page (@page) est définie dynamiquement par le script
+       à partir des paramètres ?w= et ?h= (en mm) de l'URL. */
+    @media print {
+      body { background:#fff; min-height:0; display:block; }
+      .etiquette {
+        width:100% !important;
+        height:100% !important;
+      }
+      .bg svg { width:100% !important; height:100% !important; }
+    }
   </style>
+  <style id="pageSize"></style>
 </head>
 <body>
 <div class="etiquette">
@@ -47,6 +60,13 @@
       document.getElementById('produitNom').textContent = nom;
       document.title = nom;
     }
+
+    // Taille d'impression pilotée par l'URL : ?w=80&h=50 (millimètres).
+    // Valeurs par défaut si non fournies : 80 x 50 mm.
+    var w = parseFloat(params.get('w')) || 80;
+    var h = parseFloat(params.get('h')) || 50;
+    document.getElementById('pageSize').textContent =
+      '@page { size: ' + w + 'mm ' + h + 'mm; margin: 0; }';
   })();
 </script>
 </body>
