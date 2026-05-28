@@ -35,7 +35,20 @@
         .nutrition-block { font-size: 24px; line-height: 1.4; margin-bottom: 20px; }
 
         .footer { position: absolute; bottom: 30px; left: 30px; right: 30px; display: flex; justify-content: space-between; font-size: 24px; }
+
+        /* Impression : l'étiquette remplit toute la page, sans marge.
+           La taille de page (@page) est définie dynamiquement par le script
+           à partir des paramètres ?w= et ?h= (en mm) de l'URL. */
+        @media print {
+            body { background:#fff; padding:0; display:block; }
+            .etiquette-fond {
+                width:100% !important;
+                height:100% !important;
+                padding:1.5% !important;
+            }
+        }
     </style>
+    <style id="pageSize"></style>
 </head>
 <body>
 
@@ -96,6 +109,13 @@
     } else {
       document.getElementById('poidsWrap').style.display = 'none';
     }
+
+    // Taille d'impression pilotée par l'URL : ?w=80&h=50 (millimètres).
+    // Valeurs par défaut si non fournies : 80 x 50 mm.
+    var w = parseFloat(params.get('w')) || 80;
+    var h = parseFloat(params.get('h')) || 50;
+    document.getElementById('pageSize').textContent =
+      '@page { size: ' + w + 'mm ' + h + 'mm; margin: 0; }';
   })();
 </script>
 
