@@ -41,22 +41,63 @@
 
 <div class="etiquette-fond">
     <div class="cadre-dore">
-        <div class="title">NOUGAT TRADITIONNEL</div>
+        <div class="title" id="nom">NOUGAT TRADITIONNEL</div>
         
-        <div class="line"><span class="label-name">Ingrédients :</span> sucre, sirop de glucose, amandes, miel de lavande, pistaches, blanc d'œuf</div>
-        <div class="line"><span class="label-name">Allergènes :</span> amandes, œufs</div>
+        <div class="line"><span class="label-name">Ingrédients :</span> <span id="ingredients">sucre, sirop de glucose, amandes, miel de lavande, pistaches, blanc d'œuf</span></div>
+        <div class="line"><span class="label-name">Allergènes :</span> <span id="allergenes">amandes, œufs</span></div>
         
         <div class="nutrition-block">
-            <span class="label-name">Val. nutritionnelles / 100g :</span> Énergie 1623 kJ / 383 kcal - MG 10,16 g dont AGS 0,81 Glucides 67,92 g dont sucres 53,61 g - Protéines 5,09 g - Sel 0,14 g
+            <span class="label-name">Val. nutritionnelles / 100g :</span> <span id="valeurs">Énergie 1623 kJ / 383 kcal - MG 10,16 g dont AGS 0,81 Glucides 67,92 g dont sucres 53,61 g - Protéines 5,09 g - Sel 0,14 g</span>
         </div>
 
         <div class="footer">
-            <div><span class="label-name">Lot :</span> XXXXXXXX</div>
-            <div><span class="label-name">À cons. avant :</span> JJ/MM/AAAA</div>
-            <div><span class="label-name">Poids :</span> env. 000g</div>
+            <div><span class="label-name">Lot :</span> <span id="lot">XXXXXXXX</span></div>
+            <div><span class="label-name">À cons. avant :</span> <span id="dluo">JJ/MM/AAAA</span></div>
+            <div id="poidsWrap"><span class="label-name">Poids :</span> <span id="poids">env. 000g</span></div>
         </div>
     </div>
 </div>
+
+<script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+
+    // Décode une valeur d'URL : remplace les + par des espaces puis décode.
+    function lire(cle) {
+      var v = params.get(cle);
+      if (v === null) return null;
+      try { return decodeURIComponent(v.replace(/\+/g, ' ')); }
+      catch (e) { return v.replace(/\+/g, ' '); }
+    }
+
+    // Remplit un élément si le paramètre est présent et non vide.
+    function remplir(id, cle) {
+      var v = lire(cle);
+      if (v !== null && v !== '') {
+        document.getElementById(id).textContent = v;
+        return v;
+      }
+      return null;
+    }
+
+    var nom = remplir('nom', 'nom');
+    if (nom) document.title = nom;
+    remplir('ingredients', 'ingredients');
+    remplir('allergenes', 'allergenes');
+    remplir('valeurs', 'valeurs');
+    remplir('lot', 'lot');
+    remplir('dluo', 'dluo');
+
+    // Poids : présent seulement pour le conditionnement.
+    // Si absent de l'URL, on masque toute la mention.
+    var poids = lire('poids');
+    if (poids !== null && poids !== '') {
+      document.getElementById('poids').textContent = poids;
+    } else {
+      document.getElementById('poidsWrap').style.display = 'none';
+    }
+  })();
+</script>
 
 </body>
 </html>
