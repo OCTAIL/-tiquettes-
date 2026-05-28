@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap');
+        
+        body { background: #ccc; display: flex; justify-content: center; padding: 20px; }
+        
+        /* Conteneur principal avec le fond bleu */
+        .etiquette-fond {
+            width: 755px;
+            height: 472px;
+            background-color: #1a3a8a;
+            padding: 15px; /* Espace entre le bord bleu et le cadre doré */
+            box-sizing: border-box;
+        }
+
+        /* Cadre doré interne */
+        .cadre-dore {
+            width: 100%;
+            height: 100%;
+            border: 3px solid #c5a059;
+            color: #fff;
+            font-family: 'Cormorant Garamond', serif;
+            padding: 30px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .title { font-size: 48px; color: #c5a059; text-align: center; margin-bottom: 30px; font-weight: bold; text-transform: uppercase; }
+        .line { font-size: 24px; margin-bottom: 20px; line-height: 1.4; }
+        .label-name { font-weight: bold; color: #c5a059; }
+        
+        .nutrition-block { font-size: 24px; line-height: 1.4; margin-bottom: 20px; }
+
+        .footer { position: absolute; bottom: 30px; left: 30px; right: 30px; display: flex; justify-content: space-between; font-size: 24px; }
+    </style>
+</head>
+<body>
+
+<div class="etiquette-fond">
+    <div class="cadre-dore">
+        <div class="title">NOUGAT TRADITIONNEL</div>
+        
+        <div class="line"><span class="label-name">Ingrédients :</span> sucre, sirop de glucose, amandes, miel de lavande, pistaches, blanc d'œuf</div>
+        <div class="line"><span class="label-name">Allergènes :</span> amandes, œufs</div>
+        
+        <div class="nutrition-block">
+            <span class="label-name">Val. nutritionnelles / 100g :</span> Énergie 1623 kJ / 383 kcal - MG 10,16 g dont AGS 0,81 Glucides 67,92 g dont sucres 53,61 g - Protéines 5,09 g - Sel 0,14 g
+        </div>
+
+        <div class="footer">
+            <div><span class="label-name">Lot :</span> XXXXXXXX</div>
+            <div><span class="label-name">À cons. avant :</span> JJ/MM/AAAA</div>
+            <div><span class="label-name">Poids :</span> env. 000g</div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
