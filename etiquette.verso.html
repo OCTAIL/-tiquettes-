@@ -12,7 +12,7 @@
             width: 755px;
             height: 472px;
             background-color: #1a3a8a;
-            padding: 15px; /* Espace entre le bord bleu et le cadre doré */
+            padding: 15px;
             box-sizing: border-box;
         }
 
@@ -22,14 +22,12 @@
             height: 100%;
             border: 3px solid #c5a059;
             color: #fff;
-            /* Police par défaut du contenu : sans-serif étroite, lisible à petite taille */
             font-family: 'Arial Narrow', Arial, 'Helvetica Neue', Helvetica, sans-serif;
             padding: 30px;
             box-sizing: border-box;
             position: relative;
         }
 
-        /* Le titre garde la police d'origine (serif élégant) ; reste sur une ligne */
         .title {
             font-size: 48px; color: #c5a059; text-align: center;
             margin-bottom: 30px; font-weight: bold; text-transform: uppercase;
@@ -41,27 +39,19 @@
         
         .nutrition-block { font-size: 24px; line-height: 1.4; margin-bottom: 20px; }
 
-        .footer { position: absolute; bottom: 30px; left: 30px; right: 30px; display: flex; justify-content: space-between; font-size: 24px; }
+        /* Zone poids net (conforme INCO : 3 mm pour 50-200g, 4 mm pour 200g-1kg) */
+        .poids-zone {
+            position: absolute;
+            bottom: 90px;
+            right: 30px;
+            font-weight: bold;
+            color: #c5a059;
+            text-align: right;
+        }
 
-        /* Impression : l'étiquette a une taille physique fixe en mm, indépendante
-           du format papier de l'imprimante. Toutes les dimensions internes sont
-           calculées en mm par le script (#pageSize) en fonction de ?w= / ?h=.
-            - Brother A4 : étiquette w×h dans le coin haut-gauche de la feuille
-            - Epson C4000 (format média configuré w×h) : étiquette = page entière */
-        @media print {
-            html, body {
-                margin:0; padding:0;
-                background:#ffffff !important;
-                display:block !important;
-                -webkit-print-color-adjust:exact;
-                print-color-adjust:exact;
-            }
-            .etiquette-fond {
-                position:absolute; top:0; left:0;
-                background:#1a3a8a !important;
-                -webkit-print-color-adjust:exact;
-                print-color-adjust:exact;
-            }
+        .footer {
+            position: absolute; bottom: 30px; left: 30px; right: 30px;
+            display: flex; justify-content: space-between; font-size: 24px;
         }
     </style>
     <style id="pageSize"></style>
@@ -79,10 +69,13 @@
             <span class="label-name">Val. nutritionnelles / 100g :</span> <span id="valeurs">Énergie 1623 kJ / 383 kcal - MG 10,16 g dont AGS 0,81 Glucides 67,92 g dont sucres 53,61 g - Protéines 5,09 g - Sel 0,14 g</span>
         </div>
 
+        <div id="poidsWrap" class="poids-zone">
+            <span id="poids">000 g</span>
+        </div>
+
         <div class="footer">
             <div><span class="label-name">Lot :</span> <span id="lot">XXXXXXXX</span></div>
             <div><span class="label-name">À cons. avant :</span> <span id="dluo">JJ/MM/AAAA</span></div>
-            <div id="poidsWrap"><span class="label-name">Poids :</span> <span id="poids">env. 000g</span></div>
         </div>
     </div>
 </div>
@@ -91,7 +84,6 @@
   (function () {
     var params = new URLSearchParams(window.location.search);
 
-    // Décode une valeur d'URL : remplace les + par des espaces puis décode.
     function lire(cle) {
       var v = params.get(cle);
       if (v === null) return null;
@@ -99,7 +91,6 @@
       catch (e) { return v.replace(/\+/g, ' '); }
     }
 
-    // Remplit un élément si le paramètre est présent et non vide.
     function remplir(id, cle) {
       var v = lire(cle);
       if (v !== null && v !== '') {
@@ -111,77 +102,152 @@
 
     var nom = remplir('nom', 'nom');
     if (nom) document.title = nom;
-    remplir('ingredients', 'ingredients');
+
+    var ingredientsTxt = lire('ingredients');
+    var allergenesTxt = lire('allergenes');
     remplir('allergenes', 'allergenes');
     remplir('valeurs', 'valeurs');
     remplir('lot', 'lot');
     remplir('dluo', 'dluo');
 
-    // Poids : présent seulement pour le conditionnement.
-    // Si absent de l'URL, on masque toute la mention.
+    // --- Conformité INCO : mettre les allergènes EN GRAS dans la liste des ingrédients ---
+    // L'INCO impose que les allergènes soient mis en évidence dans la liste des ingrédients
+    // (Article 21 / Annexe II du règlement UE 1169/2011).
+    function mettreAllergenesEnGras(ingredientsHtml, allergenesText) {
+      if (!ingredientsHtml || !allergenesText) return ingredientsHtml;
+      // Extraire les mots-clés courts (avant les éventuelles mentions de précaution longues)
+      var tokens = allergenesText.split(/[,;.]/)
+        .map(function(s) { return s.trim(); })
+        .filter(function(s) {
+          if (!s) return false;
+          // Garder uniquement les noms d'allergènes courts (1-3 mots, sans verbes de précaution)
+          var lower = s.toLowerCase();
+          if (lower.indexOf('fabriqu') !== -1) return false;
+          if (lower.indexOf('atelier') !== -1) return false;
+          if (lower.indexOf('utilise') !== -1) return false;
+          if (lower.indexOf('peut contenir') !== -1) return false;
+          return s.split(/\s+/).length <= 3 && s.length >= 3 && s.length <= 30;
+        });
+
+      var result = ingredientsHtml;
+      tokens.forEach(function(token) {
+        // Échapper les caractères regex spéciaux
+        var escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Gestion singulier/pluriel : 's' optionnel à la fin
+        // \b ne fonctionne pas avec les accents, on utilise (^|[^\wÀ-ÿ]) et ([^\wÀ-ÿ]|$)
+        var regex = new RegExp('(^|[^A-Za-zÀ-ÿ])(' + escaped + 's?)(?=[^A-Za-zÀ-ÿ]|$)', 'gi');
+        result = result.replace(regex, function(match, before, word) {
+          return before + '<strong>' + word + '</strong>';
+        });
+      });
+      return result;
+    }
+
+    if (ingredientsTxt) {
+      // Échapper le HTML d'origine pour éviter toute injection, puis ajouter <strong>
+      var escapedIngredients = ingredientsTxt
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      document.getElementById('ingredients').innerHTML = mettreAllergenesEnGras(escapedIngredients, allergenesTxt || '');
+    }
+
+    // --- Poids : présent seulement pour le conditionnement ---
     var poids = lire('poids');
+    var poidsValeurG = 0;
     if (poids !== null && poids !== '') {
       document.getElementById('poids').textContent = poids;
+      // Extraire la valeur numérique en grammes pour calculer la taille requise
+      var m = poids.match(/(\d+(?:[.,]\d+)?)\s*(kg|g)/i);
+      if (m) {
+        poidsValeurG = parseFloat(m[1].replace(',', '.'));
+        if (m[2].toLowerCase() === 'kg') poidsValeurG *= 1000;
+      }
     } else {
       document.getElementById('poidsWrap').style.display = 'none';
     }
 
-    // Dimensions de l'étiquette pilotées par l'URL : ?w=76&h=50 (millimètres).
-    // Valeurs par défaut si non fournies : 76 x 50 mm.
+    // --- Dimensions de l'étiquette : ?w=76&h=50 (mm) ---
     var w = parseFloat(params.get('w')) || 76;
     var h = parseFloat(params.get('h')) || 50;
-
-    // Helpers : convertit un pourcentage de largeur/hauteur en mm.
     function vwmm(x) { return (x * w / 100).toFixed(3) + 'mm'; }
-    function vhmm(x) { return (x * h / 100).toFixed(3) + 'mm'; }
 
-    // Tailles en mm absolues injectées dans @media print pour qu'elles soient
-    // indépendantes du format papier réel de l'imprimante (A4, rouleau 76x50…).
-    // Les ratios viennent de la version vw qui marchait bien à 80x50 (vw = 1% de w).
-    // Taille du titre adaptative : on mesure la largeur RÉELLE du texte rendu
-    // dans le DOM (à l'écran) puis on réduit le font-size juste assez pour qu'il
-    // rentre sur une seule ligne, quelle que soit la longueur du nom.
-    function calculerTitreEtAppliquer() {
+    // --- Taille du poids selon Décret 78-166 (hauteur des chiffres) ---
+    // ≤ 50g : 2mm | 50-200g : 3mm | 200g-1kg : 4mm | >1kg : 6mm
+    // font-size ≈ hauteur_chiffre / 0.72 (cap-height d'une police)
+    var poidsFontMM;
+    if (poidsValeurG <= 50) poidsFontMM = 2.8;
+    else if (poidsValeurG <= 200) poidsFontMM = 4.2;   // chiffres ≥ 3 mm
+    else if (poidsValeurG <= 1000) poidsFontMM = 5.6;  // chiffres ≥ 4 mm
+    else poidsFontMM = 8.4;                            // chiffres ≥ 6 mm
+
+    // --- Titre adaptatif : on mesure la largeur réelle pour que ça tienne sur 1 ligne ---
+    function calculerEtAppliquer() {
       var nomEl = document.getElementById('nom');
-      // Reset à la taille de base (48px) pour partir d'une mesure stable
       nomEl.style.fontSize = '48px';
-      // clientWidth = zone d'affichage réelle du titre (cadre moins padding)
       var dispoPx = nomEl.clientWidth;
-      // scrollWidth = largeur du texte rendu sans contraintes (white-space:nowrap)
       var texteW = nomEl.scrollWidth;
-
       var fontePx = 48;
       if (texteW > dispoPx) {
-        // Réduire le font-size proportionnellement, avec 4% de marge de sécurité
         fontePx = Math.floor(48 * (dispoPx / texteW) * 0.96);
         nomEl.style.fontSize = fontePx + 'px';
       }
-
-      // Conversion px → mm pour l'impression : la zone du titre occupe à l'impression
-      // la même fraction de la largeur de l'étiquette qu'à l'écran (cadre/padding identiques).
-      // On en déduit la taille mm équivalente au fontePx mesuré à l'écran.
-      var fractionLargeur = dispoPx / 755; // 755 = largeur de .etiquette-fond à l'écran
+      var fractionLargeur = dispoPx / 755;
       var zoneTitreMM = w * fractionLargeur;
       var titreMM = fontePx * zoneTitreMM / dispoPx;
+
+      // --- Auto-shrink du contenu si débordement ---
+      // Tailles de base (en vw, pour respecter le minimum INCO de 0.9mm hauteur de x)
+      var baseLineVw = 3.2, baseNutVw = 3.0;
+      // Minimum INCO : 0.9mm hauteur de x ≈ 1.6mm font-size → en vw : 1.6/76*100 = 2.1vw
+      var minVw = 2.1;
+      var facteur = 1.0;
+
+      // Mesure de débordement à l'écran : on compare la position basse du dernier élément
+      // de contenu avec le haut de la zone réservée (poids + footer).
+      var nutritionEl = document.querySelector('.nutrition-block');
+      var poidsEl = document.getElementById('poidsWrap');
+      var footerEl = document.querySelector('.footer');
+      var poidsVisible = poidsEl && poidsEl.style.display !== 'none';
+
+      // Espace réservé en bas (px à l'écran) : poids (si présent) + footer + marges
+      // À l'écran (472px de haut), le footer occupe ~ bottom 30px + ~30px de hauteur = top à 412.
+      // La zone poids commence vers bottom 90px + ~poidsFontPx hauteur.
+      var poidsFontPx = poidsFontMM * (472 / h);
+      var hReservePx = poidsVisible ? (60 + poidsFontPx) : 60;
+      var espaceDispoPx = 472 - 15 - 3 - 30 - hReservePx; // hauteur étiquette - paddings - reserve
+
+      var nutritionBottom = nutritionEl.offsetTop + nutritionEl.offsetHeight;
+
+      if (nutritionBottom > espaceDispoPx) {
+        facteur = espaceDispoPx / nutritionBottom;
+        // Garde-fou INCO : ne pas descendre sous la taille mini
+        var lineVwReduit = baseLineVw * facteur;
+        var nutVwReduit = baseNutVw * facteur;
+        if (lineVwReduit < minVw) lineVwReduit = minVw;
+        if (nutVwReduit < minVw) nutVwReduit = minVw;
+        baseLineVw = lineVwReduit;
+        baseNutVw = nutVwReduit;
+      }
 
       document.getElementById('pageSize').textContent =
         '@page { margin: 0; }' +
         '@media print {' +
-          '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; }' +
-          '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' ' + vwmm(3) + ' ' + vwmm(7) + ' ' + vwmm(3) + ' !important; }' +
-          '.title { font-size: ' + titreMM.toFixed(3) + 'mm !important; margin-bottom: ' + vwmm(2.5) + ' !important; overflow: hidden !important; }' +
-        '.line { font-size: ' + vwmm(3.7) + ' !important; margin-bottom: ' + vwmm(1.8) + ' !important; line-height: 1.2 !important; }' +
-        '.nutrition-block { font-size: ' + vwmm(3.7) + ' !important; line-height: 1.2 !important; margin-bottom: ' + vwmm(1.8) + ' !important; }' +
-        '.footer { position: absolute !important; bottom: ' + vwmm(2.5) + ' !important; left: ' + vwmm(3) + ' !important; right: ' + vwmm(3) + ' !important; font-size: ' + vwmm(3.2) + ' !important; }' +
-      '}';
+          'html, body { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }' +
+          '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; overflow: hidden !important; }' +
+          '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' ' + vwmm(3) + ' ' + vwmm(5.5) + ' ' + vwmm(3) + ' !important; }' +
+          '.title { font-size: ' + titreMM.toFixed(3) + 'mm !important; margin-bottom: ' + vwmm(2) + ' !important; overflow: hidden !important; }' +
+          '.line { font-size: ' + vwmm(baseLineVw) + ' !important; margin-bottom: ' + vwmm(1.3) + ' !important; line-height: 1.2 !important; }' +
+          '.nutrition-block { font-size: ' + vwmm(baseNutVw) + ' !important; line-height: 1.2 !important; margin-bottom: ' + vwmm(1.3) + ' !important; }' +
+          '.poids-zone { position: absolute !important; bottom: ' + vwmm(7) + ' !important; right: ' + vwmm(3) + ' !important; font-size: ' + poidsFontMM + 'mm !important; }' +
+          '.footer { position: absolute !important; bottom: ' + vwmm(2) + ' !important; left: ' + vwmm(3) + ' !important; right: ' + vwmm(3) + ' !important; font-size: ' + vwmm(2.7) + ' !important; }' +
+        '}';
     }
 
-    // On attend que la police Cormorant Garamond soit chargée avant de mesurer,
-    // sinon la mesure se fait sur la fonte de fallback (largeur différente).
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(calculerTitreEtAppliquer);
+      document.fonts.ready.then(calculerEtAppliquer);
     } else {
-      setTimeout(calculerTitreEtAppliquer, 300);
+      setTimeout(calculerEtAppliquer, 300);
     }
   })();
 </script>
