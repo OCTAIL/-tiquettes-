@@ -36,50 +36,24 @@
 
         .footer { position: absolute; bottom: 30px; left: 30px; right: 30px; display: flex; justify-content: space-between; font-size: 24px; }
 
-        /* Impression : l'étiquette remplit toute la page, sans marge.
-           Toutes les tailles deviennent proportionnelles à la largeur de page
-           (unité vw = 1% de la largeur de la feuille) pour tenir sur une seule
-           étiquette quelle que soit la dimension (?w= / ?h=). */
+        /* Impression : l'étiquette a une taille physique fixe en mm, indépendante
+           du format papier de l'imprimante. Toutes les dimensions internes sont
+           calculées en mm par le script (#pageSize) en fonction de ?w= / ?h=.
+            - Brother A4 : étiquette w×h dans le coin haut-gauche de la feuille
+            - Epson C4000 (format média configuré w×h) : étiquette = page entière */
         @media print {
             html, body {
-                width:100%; height:100%;
                 margin:0; padding:0;
-                background:#1a3a8a !important;
+                background:#ffffff !important;
                 display:block !important;
                 -webkit-print-color-adjust:exact;
                 print-color-adjust:exact;
             }
             .etiquette-fond {
                 position:absolute; top:0; left:0;
-                width:100% !important;
-                height:100% !important;
-                padding:2.5vw !important;
                 background:#1a3a8a !important;
-            }
-            .cadre-dore {
-                border-width:0.4vw !important;
-                padding:3vw !important;
-            }
-            .title {
-                font-size:8vw !important;
-                margin-bottom:2.5vw !important;
-            }
-            .line {
-                font-size:3.7vw !important;
-                margin-bottom:1.8vw !important;
-                line-height:1.2 !important;
-            }
-            .nutrition-block {
-                font-size:3.7vw !important;
-                line-height:1.2 !important;
-                margin-bottom:1.8vw !important;
-            }
-            .footer {
-                position:absolute !important;
-                bottom:2.5vw !important;
-                left:3vw !important;
-                right:3vw !important;
-                font-size:3.2vw !important;
+                -webkit-print-color-adjust:exact;
+                print-color-adjust:exact;
             }
         }
     </style>
@@ -145,12 +119,28 @@
       document.getElementById('poidsWrap').style.display = 'none';
     }
 
-    // Taille d'impression pilotée par l'URL : ?w=80&h=50 (millimètres).
-    // Valeurs par défaut si non fournies : 80 x 50 mm.
-    var w = parseFloat(params.get('w')) || 80;
+    // Dimensions de l'étiquette pilotées par l'URL : ?w=76&h=50 (millimètres).
+    // Valeurs par défaut si non fournies : 76 x 50 mm.
+    var w = parseFloat(params.get('w')) || 76;
     var h = parseFloat(params.get('h')) || 50;
+
+    // Helpers : convertit un pourcentage de largeur/hauteur en mm.
+    function vwmm(x) { return (x * w / 100).toFixed(3) + 'mm'; }
+    function vhmm(x) { return (x * h / 100).toFixed(3) + 'mm'; }
+
+    // Tailles en mm absolues injectées dans @media print pour qu'elles soient
+    // indépendantes du format papier réel de l'imprimante (A4, rouleau 76x50…).
+    // Les ratios viennent de la version vw qui marchait bien à 80x50 (vw = 1% de w).
     document.getElementById('pageSize').textContent =
-      '@page { size: ' + w + 'mm ' + h + 'mm; margin: 0; }';
+      '@page { margin: 0; }' +
+      '@media print {' +
+        '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; }' +
+        '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' !important; }' +
+        '.title { font-size: ' + vwmm(8) + ' !important; margin-bottom: ' + vwmm(2.5) + ' !important; }' +
+        '.line { font-size: ' + vwmm(3.7) + ' !important; margin-bottom: ' + vwmm(1.8) + ' !important; line-height: 1.2 !important; }' +
+        '.nutrition-block { font-size: ' + vwmm(3.7) + ' !important; line-height: 1.2 !important; margin-bottom: ' + vwmm(1.8) + ' !important; }' +
+        '.footer { position: absolute !important; bottom: ' + vwmm(2.5) + ' !important; left: ' + vwmm(3) + ' !important; right: ' + vwmm(3) + ' !important; font-size: ' + vwmm(3.2) + ' !important; }' +
+      '}';
   })();
 </script>
 
