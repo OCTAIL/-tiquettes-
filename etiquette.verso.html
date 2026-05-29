@@ -121,12 +121,20 @@
           return s.split(/\s+/).length <= 3 && s.length >= 3 && s.length <= 30;
         });
 
+      // Dédupliquer les tokens (insensible à la casse)
+      var seen = {};
+      tokens = tokens.filter(function(t) {
+        var key = t.toLowerCase();
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      });
+
       var result = texteHtml;
       tokens.forEach(function(token) {
         var escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // \b ne fonctionne pas avec les accents, on utilise (^|[^\wÀ-ÿ]) et ([^\wÀ-ÿ]|$)
-        // Avec 's' optionnel pour gérer singulier/pluriel
-        var regex = new RegExp('(^|[^A-Za-z\u00C0-\u00FF])(' + escaped + 's?)(?=[^A-Za-z\u00C0-\u00FF]|$)', 'gi');
+        // Pas de 'g' : on ne met en gras QUE LA PREMIÈRE OCCURRENCE
+        var regex = new RegExp('(^|[^A-Za-z\u00C0-\u00FF])(' + escaped + 's?)(?=[^A-Za-z\u00C0-\u00FF]|$)', 'i');
         result = result.replace(regex, function(match, before, word) {
           return before + '<strong>' + word + '</strong>';
         });
@@ -191,38 +199,51 @@
       var zoneTitreMM = w * fractionLargeur;
       var titreMM = fontePx * zoneTitreMM / dispoPx;
 
-      // --- Auto-shrink du contenu si débordement ---
-      // Tailles de base (en vw, pour respecter le minimum INCO de 0.9mm hauteur de x)
-      var baseLineVw = 3.2, baseNutVw = 3.0;
+      // --- Auto-fit du contenu ---
+      // Stratégie : ajuster les ESPACES en priorité (marges entre sections).
+      // Les fontes ne sont touchées qu'en dernier recours pour respecter le min INCO.
+      var baseLineVw = 3.2, baseNutVw = 3.0, baseMarginVw = 1.3;
       // Minimum INCO : 0.9mm hauteur de x ≈ 1.6mm font-size → en vw : 1.6/76*100 = 2.1vw
       var minVw = 2.1;
-      var facteur = 1.0;
+      // Marges : min serré (0.3vw) et max aéré (3.0vw)
+      var minMarginVw = 0.3, maxMarginVw = 3.0;
 
-      // Mesure de débordement à l'écran : on compare la position basse du dernier élément
-      // de contenu avec le haut de la zone réservée (poids + footer).
+      // Mesure : on compare la position basse du contenu avec le haut de la zone footer.
       var nutritionEl = document.querySelector('.nutrition-block');
       var poidsEl = document.getElementById('poidsWrap');
       var footerEl = document.querySelector('.footer');
       var poidsVisible = poidsEl && poidsEl.style.display !== 'none';
 
-      // Espace réservé en bas (px à l'écran) : poids (si présent) + footer + marges
-      // À l'écran (472px de haut), le footer occupe ~ bottom 30px + ~30px de hauteur = top à 412.
-      // La zone poids commence vers bottom 90px + ~poidsFontPx hauteur.
+      // Espace réservé en bas (px à l'écran) : footer (+ poids si présent)
       var poidsFontPx = poidsFontMM * (472 / h);
-      var hReservePx = poidsVisible ? (60 + poidsFontPx) : 60;
-      var espaceDispoPx = 472 - 15 - 3 - 30 - hReservePx; // hauteur étiquette - paddings - reserve
+      var hReservePx = poidsVisible ? Math.max(60, poidsFontPx + 30) : 60;
+      var espaceDispoPx = 472 - 15 - 3 - 30 - hReservePx;
 
       var nutritionBottom = nutritionEl.offsetTop + nutritionEl.offsetHeight;
 
-      if (nutritionBottom > espaceDispoPx) {
-        facteur = espaceDispoPx / nutritionBottom;
-        // Garde-fou INCO : ne pas descendre sous la taille mini
-        var lineVwReduit = baseLineVw * facteur;
-        var nutVwReduit = baseNutVw * facteur;
-        if (lineVwReduit < minVw) lineVwReduit = minVw;
-        if (nutVwReduit < minVw) nutVwReduit = minVw;
-        baseLineVw = lineVwReduit;
-        baseNutVw = nutVwReduit;
+      if (nutritionBottom > 0) {
+        var ratio = espaceDispoPx / nutritionBottom;
+        if (ratio > 1.0) {
+          // Auto-grow : agrandir les marges (pas les fontes), avec cap à 2.5x
+          var capRatio = Math.min(ratio, 2.5);
+          baseMarginVw = Math.min(maxMarginVw, baseMarginVw * capRatio);
+        } else if (ratio < 1.0) {
+          // Auto-shrink : réduire les marges
+          baseMarginVw = Math.max(minMarginVw, baseMarginVw * ratio);
+          // Si marges au mini et ça déborde encore, réduire les fontes (respect INCO)
+          if (baseMarginVw <= minMarginVw + 0.01) {
+            // Estimation du débordement résiduel après réduction des marges
+            // 4 marges réduites de (1.3 - 0.3) vw = 4 vw total
+            // Conversion vw → px à l'écran : 1vw = 7.55px (755/100), 1px = 0.139vw approx
+            var economiseEnPx = (1.3 - minMarginVw) * 4 * 7.55;
+            var resteDeficitPx = (nutritionBottom - espaceDispoPx) - economiseEnPx;
+            if (resteDeficitPx > 0) {
+              var fonteRatio = (nutritionBottom - resteDeficitPx) / nutritionBottom;
+              baseLineVw = Math.max(minVw, baseLineVw * fonteRatio);
+              baseNutVw = Math.max(minVw, baseNutVw * fonteRatio);
+            }
+          }
+        }
       }
 
       document.getElementById('pageSize').textContent =
@@ -230,10 +251,10 @@
         '@media print {' +
           'html, body { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }' +
           '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; overflow: hidden !important; }' +
-          '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' ' + vwmm(3) + ' ' + vwmm(5.5) + ' ' + vwmm(3) + ' !important; }' +
-          '.title { font-size: ' + titreMM.toFixed(3) + 'mm !important; margin-bottom: ' + vwmm(2) + ' !important; overflow: hidden !important; }' +
-          '.line { font-size: ' + vwmm(baseLineVw) + ' !important; margin-bottom: ' + vwmm(1.3) + ' !important; line-height: 1.2 !important; }' +
-          '.nutrition-block { font-size: ' + vwmm(baseNutVw) + ' !important; line-height: 1.2 !important; margin-bottom: ' + vwmm(1.3) + ' !important; }' +
+          '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' ' + vwmm(3) + ' ' + vwmm(5.5) + ' ' + vwmm(3) + ' !important; display: flex !important; flex-direction: column !important; justify-content: space-evenly !important; }' +
+          '.title { font-size: ' + titreMM.toFixed(3) + 'mm !important; margin-bottom: 0 !important; overflow: hidden !important; flex-shrink: 0 !important; }' +
+          '.line { font-size: ' + vwmm(baseLineVw) + ' !important; margin-bottom: 0 !important; line-height: 1.2 !important; flex-shrink: 0 !important; }' +
+          '.nutrition-block { font-size: ' + vwmm(baseNutVw) + ' !important; line-height: 1.2 !important; margin-bottom: 0 !important; flex-shrink: 0 !important; }' +
           '.poids-value { font-size: ' + poidsFontMM + 'mm !important; font-weight: bold !important; white-space: nowrap !important; }' +
           '.footer { position: absolute !important; bottom: ' + vwmm(2) + ' !important; left: ' + vwmm(3) + ' !important; right: ' + vwmm(3) + ' !important; font-size: ' + vwmm(2.7) + ' !important; align-items: baseline !important; gap: ' + vwmm(2) + ' !important; }' +
           '.footer > div { white-space: nowrap !important; }' +
