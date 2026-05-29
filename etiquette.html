@@ -34,20 +34,22 @@
        à partir des paramètres ?w= et ?h= (en mm) de l'URL. */
     @media print {
       html, body {
-        width:100%; height:100%;
         margin:0; padding:0;
-        background:#213b8a !important;
+        background:#ffffff !important;
         display:block !important;
         -webkit-print-color-adjust:exact;
         print-color-adjust:exact;
       }
       .etiquette {
         position:absolute; top:0; left:0;
-        width:100%; height:100%;
         overflow:hidden;
+        -webkit-print-color-adjust:exact;
+        print-color-adjust:exact;
       }
       .bg, .bg svg, .overlay {
         width:100% !important; height:100% !important;
+        -webkit-print-color-adjust:exact;
+        print-color-adjust:exact;
       }
       /* Le nom produit doit suivre le scaling de la page : positions et taille
          exprimées en pourcentage du conteneur et en vw pour la police. */
@@ -56,8 +58,6 @@
         left: 10.6% !important;
         width: 80.8% !important;
         height: 7.4% !important;
-        font-size: 6vw !important;
-        letter-spacing: 0.25vw !important;
       }
     }
   </style>
@@ -85,8 +85,26 @@
     // Valeurs par défaut si non fournies : 80 x 50 mm.
     var w = parseFloat(params.get('w')) || 80;
     var h = parseFloat(params.get('h')) || 50;
+    // Le @page définit la taille de page côté CSS (utilisée par certains
+    // pilotes/Chrome), et on force la taille physique de l'étiquette en mm absolus.
+    // Ainsi, sur A4 (Brother) l'étiquette occupe 80x50 dans le coin ;
+    // sur une étiquette en rouleau (Epson C4000) elle remplit toute la page.
+    // On NE définit PAS @page size (sinon Chrome crée une "page virtuelle"
+    // que le pilote Brother étire ensuite à A4 physique). On laisse l'imprimante
+    // décider du format papier, et on impose juste la taille physique de l'étiquette
+    // en mm absolus.
+    //  - Brother A4 : étiquette de 80x50mm dans le coin haut-gauche de la feuille A4
+    //  - Epson C4000 avec rouleau 80x50 : étiquette = page entière (remplit le rouleau)
+    // font-size et letter-spacing du nom produit, en mm, calculés à partir de h
+    // (20px / 189px de hauteur d'origine = 10.58% de la hauteur)
+    var fontMM = (h * 0.1058).toFixed(2);
+    var letterMM = (h * 0.00529).toFixed(3);
     document.getElementById('pageSize').textContent =
-      '@page { size: ' + w + 'mm ' + h + 'mm; margin: 0; }';
+      '@page { margin: 0; }' +
+      '@media print {' +
+        '.etiquette { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
+        '.produit-nom { font-size: ' + fontMM + 'mm !important; letter-spacing: ' + letterMM + 'mm !important; }' +
+      '}';
   })();
 </script>
 </body>
