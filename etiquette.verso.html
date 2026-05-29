@@ -22,13 +22,20 @@
             height: 100%;
             border: 3px solid #c5a059;
             color: #fff;
-            font-family: 'Cormorant Garamond', serif;
+            /* Police par défaut du contenu : sans-serif étroite, lisible à petite taille */
+            font-family: 'Arial Narrow', Arial, 'Helvetica Neue', Helvetica, sans-serif;
             padding: 30px;
             box-sizing: border-box;
             position: relative;
         }
 
-        .title { font-size: 48px; color: #c5a059; text-align: center; margin-bottom: 30px; font-weight: bold; text-transform: uppercase; }
+        /* Le titre garde la police d'origine (serif élégant) ; reste sur une ligne */
+        .title {
+            font-size: 48px; color: #c5a059; text-align: center;
+            margin-bottom: 30px; font-weight: bold; text-transform: uppercase;
+            font-family: 'Cormorant Garamond', serif;
+            white-space: nowrap;
+        }
         .line { font-size: 24px; margin-bottom: 20px; line-height: 1.4; }
         .label-name { font-weight: bold; color: #c5a059; }
         
@@ -131,16 +138,51 @@
     // Tailles en mm absolues injectées dans @media print pour qu'elles soient
     // indépendantes du format papier réel de l'imprimante (A4, rouleau 76x50…).
     // Les ratios viennent de la version vw qui marchait bien à 80x50 (vw = 1% de w).
-    document.getElementById('pageSize').textContent =
-      '@page { margin: 0; }' +
-      '@media print {' +
-        '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; }' +
-        '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' !important; }' +
-        '.title { font-size: ' + vwmm(8) + ' !important; margin-bottom: ' + vwmm(2.5) + ' !important; }' +
+    // Taille du titre adaptative : on mesure la largeur RÉELLE du texte rendu
+    // dans le DOM (à l'écran) puis on réduit le font-size juste assez pour qu'il
+    // rentre sur une seule ligne, quelle que soit la longueur du nom.
+    function calculerTitreEtAppliquer() {
+      var nomEl = document.getElementById('nom');
+      // Reset à la taille de base (48px) pour partir d'une mesure stable
+      nomEl.style.fontSize = '48px';
+      // clientWidth = zone d'affichage réelle du titre (cadre moins padding)
+      var dispoPx = nomEl.clientWidth;
+      // scrollWidth = largeur du texte rendu sans contraintes (white-space:nowrap)
+      var texteW = nomEl.scrollWidth;
+
+      var fontePx = 48;
+      if (texteW > dispoPx) {
+        // Réduire le font-size proportionnellement, avec 4% de marge de sécurité
+        fontePx = Math.floor(48 * (dispoPx / texteW) * 0.96);
+        nomEl.style.fontSize = fontePx + 'px';
+      }
+
+      // Conversion px → mm pour l'impression : la zone du titre occupe à l'impression
+      // la même fraction de la largeur de l'étiquette qu'à l'écran (cadre/padding identiques).
+      // On en déduit la taille mm équivalente au fontePx mesuré à l'écran.
+      var fractionLargeur = dispoPx / 755; // 755 = largeur de .etiquette-fond à l'écran
+      var zoneTitreMM = w * fractionLargeur;
+      var titreMM = fontePx * zoneTitreMM / dispoPx;
+
+      document.getElementById('pageSize').textContent =
+        '@page { margin: 0; }' +
+        '@media print {' +
+          '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; }' +
+          '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' ' + vwmm(3) + ' ' + vwmm(7) + ' ' + vwmm(3) + ' !important; }' +
+          '.title { font-size: ' + titreMM.toFixed(3) + 'mm !important; margin-bottom: ' + vwmm(2.5) + ' !important; overflow: hidden !important; }' +
         '.line { font-size: ' + vwmm(3.7) + ' !important; margin-bottom: ' + vwmm(1.8) + ' !important; line-height: 1.2 !important; }' +
         '.nutrition-block { font-size: ' + vwmm(3.7) + ' !important; line-height: 1.2 !important; margin-bottom: ' + vwmm(1.8) + ' !important; }' +
         '.footer { position: absolute !important; bottom: ' + vwmm(2.5) + ' !important; left: ' + vwmm(3) + ' !important; right: ' + vwmm(3) + ' !important; font-size: ' + vwmm(3.2) + ' !important; }' +
       '}';
+    }
+
+    // On attend que la police Cormorant Garamond soit chargée avant de mesurer,
+    // sinon la mesure se fait sur la fonte de fallback (largeur différente).
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(calculerTitreEtAppliquer);
+    } else {
+      setTimeout(calculerTitreEtAppliquer, 300);
+    }
   })();
 </script>
 
