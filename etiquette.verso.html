@@ -9,6 +9,12 @@
     }
     var w = parseFloat(params.get('w')) || 80;
     var h = parseFloat(params.get('h')) || 50;
+
+    // Style inline sur body — priorité absolue, écrase min-height:100vh
+    document.body.style.minHeight = '0px';
+    document.body.style.height = h + 'mm';
+    document.body.style.overflow = 'hidden';
+
     var fontMM = (h * 0.1058).toFixed(2);
     var letterMM = (h * 0.00529).toFixed(3);
     document.getElementById('pageSize').textContent =
