@@ -11,13 +11,20 @@
     var w = parseFloat(params.get('w')) || 80;
     var h = parseFloat(params.get('h')) || 50;
 
+    // Spacer invisible qui force la hauteur de page = 1 étiquette
+    var spacer = document.createElement('div');
+    spacer.id = 'printSpacer';
+    document.body.appendChild(spacer);
+
     var fontMM = (h * 0.1058).toFixed(2);
     var letterMM = (h * 0.00529).toFixed(3);
     document.getElementById('pageSize').textContent =
       '@page { margin: 0; }' +
+      '#printSpacer { display: none; }' +
       '@media print {' +
-        'html, body { min-height: 0 !important; height: auto !important; width: ' + w + 'mm !important; margin: 0 !important; padding: 0 !important; }' +
-        '.etiquette { position: relative !important; width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
+        'html, body { min-height: 0 !important; margin: 0 !important; padding: 0 !important; }' +
+        '#printSpacer { display: block !important; width: ' + w + 'mm; height: ' + h + 'mm; visibility: hidden; }' +
+        '.etiquette { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
         '.produit-nom { font-size: ' + fontMM + 'mm !important; letter-spacing: ' + letterMM + 'mm !important; }' +
       '}';
   })();
