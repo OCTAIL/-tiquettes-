@@ -11,8 +11,10 @@
     var w = parseFloat(params.get('w')) || 80;
     var h = parseFloat(params.get('h')) || 50;
 
+    // Force le body à exactement h mm en écran ET en impression
     var bodyFix = document.createElement('style');
-    bodyFix.textContent = 'body { min-height: 0 !important; height: 100vh !important; }';
+    bodyFix.textContent =
+      'body { min-height: 0 !important; height: ' + h + 'mm !important; width: ' + w + 'mm !important; overflow: hidden !important; }';
     document.head.appendChild(bodyFix);
 
     var fontMM = (h * 0.1058).toFixed(2);
@@ -20,7 +22,6 @@
     document.getElementById('pageSize').textContent =
       '@page { margin: 0; }' +
       '@media print {' +
-        'html, body { height: ' + h + 'mm !important; min-height: 0 !important; overflow: hidden !important; width: ' + w + 'mm !important; margin: 0 !important; padding: 0 !important; }' +
         '.etiquette { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
         '.produit-nom { font-size: ' + fontMM + 'mm !important; letter-spacing: ' + letterMM + 'mm !important; }' +
       '}';
