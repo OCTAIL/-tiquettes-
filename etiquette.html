@@ -14,10 +14,11 @@
     var fontMM = (h * 0.1058).toFixed(2);
     var letterMM = (h * 0.00529).toFixed(3);
     document.getElementById('pageSize').textContent =
-      '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
+      '@page { margin: 0; }' +
       '@media print {' +
         '.etiquette { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
         '.produit-nom { font-size: ' + fontMM + 'mm !important; letter-spacing: ' + letterMM + 'mm !important; }' +
       '}';
   })();
+</script>
 </script>
