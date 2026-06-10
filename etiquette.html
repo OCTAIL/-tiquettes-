@@ -8,15 +8,9 @@
       document.title = nom;
     }
 
-    // Taille d'impression pilotée par l'URL : ?w=80&h=50 (millimètres).
-    // Valeurs par défaut si non fournies : 80 x 50 mm.
     var w = parseFloat(params.get('w')) || 80;
     var h = parseFloat(params.get('h')) || 50;
 
-    // @page size défini dynamiquement pour que Chrome génère un PDF
-    // exactement aux dimensions de l'étiquette (80x50mm par défaut).
-    // Cela garantit un rendu 1:1 dans ColorWorks Print sur Android
-    // (pas de décalage, pas d'étiquettes gaspillées).
     var fontMM = (h * 0.1058).toFixed(2);
     var letterMM = (h * 0.00529).toFixed(3);
     document.getElementById('pageSize').textContent =
