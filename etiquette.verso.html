@@ -7,14 +7,12 @@
       document.getElementById('produitNom').textContent = nom;
       document.title = nom;
     }
-
     var w = parseFloat(params.get('w')) || 80;
     var h = parseFloat(params.get('h')) || 50;
-
     var fontMM = (h * 0.1058).toFixed(2);
     var letterMM = (h * 0.00529).toFixed(3);
     document.getElementById('pageSize').textContent =
-      '@page { margin: 0; }' +
+      '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
       '@media print {' +
         'html, body { min-height: 0 !important; height: ' + h + 'mm !important; width: ' + w + 'mm !important; }' +
         '.etiquette { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
