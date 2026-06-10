@@ -83,12 +83,14 @@
     var h = parseFloat(params.get('h')) || 51;
     var fontMM = (h * 0.1058).toFixed(2);
     var letterMM = (h * 0.00529).toFixed(3);
-    document.getElementById('pageSize').textContent =
+   document.getElementById('pageSize').textContent =
       '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
       '@media print {' +
-  'html, body { overflow: hidden !important; }' +
-  '.etiquette { width: ...
-        '.bg, .bg svg, .overlay { -webkit-transform: translateZ(0) !important; transform: translateZ(0) !important; }' +
+        'html, body { overflow: hidden !important; }' +
+        '.etiquette { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
+        '.bg { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
+        '.bg svg { width: 100% !important; height: 100% !important; }' +
+        '.overlay { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
         '.produit-nom { font-size: ' + fontMM + 'mm !important; letter-spacing: ' + letterMM + 'mm !important; }' +
       '}';
   })();
