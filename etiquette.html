@@ -86,7 +86,8 @@
     document.getElementById('pageSize').textContent =
       '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
       '@media print {' +
-        '.etiquette { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
+  'html, body { overflow: hidden !important; }' +
+  '.etiquette { width: ...
         '.bg, .bg svg, .overlay { -webkit-transform: translateZ(0) !important; transform: translateZ(0) !important; }' +
         '.produit-nom { font-size: ' + fontMM + 'mm !important; letter-spacing: ' + letterMM + 'mm !important; }' +
       '}';
