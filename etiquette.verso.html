@@ -105,16 +105,22 @@
     remplir('lot', 'lot');
     remplir('dluo', 'dluo');
 
-    function mettreAllergenesEnGras(texteHtml, allergenesText) {
-      if (!texteHtml || !allergenesText) return texteHtml;
+    var poids = lire('poids');
+    if (poids !== null && poids !== '') {
+      document.getElementById('poids').textContent = poids;
+    } else {
+      document.getElementById('poidsWrap').style.display = 'none';
+    }
+
+    function mettreAllergenesEnGras(texte, allergenesText) {
+      if (!texte || !allergenesText) return texte;
       var tokens = allergenesText.split(/[,;.]/)
         .map(function(s) { return s.trim(); })
         .filter(function(s) {
           if (!s) return false;
           var lower = s.toLowerCase();
-          if (lower.indexOf('fabriqu')     !== -1) return false;
-          if (lower.indexOf('atelier')     !== -1) return false;
-          if (lower.indexOf('utilise')     !== -1) return false;
+          if (lower.indexOf('fabriqu') !== -1) return false;
+          if (lower.indexOf('atelier') !== -1) return false;
           if (lower.indexOf('peut contenir') !== -1) return false;
           return s.split(/\s+/).length <= 3 && s.length >= 3 && s.length <= 30;
         });
@@ -125,113 +131,28 @@
         seen[key] = true;
         return true;
       });
-      var result = texteHtml;
+      var result = texte;
       tokens.forEach(function(token) {
         var escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         var regex = new RegExp('(^|[^A-Za-z\u00C0-\u00FF])(' + escaped + 's?)(?=[^A-Za-z\u00C0-\u00FF]|$)', 'i');
-        result = result.replace(regex, function(match, before, word) {
+        result = result.replace(regex, function(m, before, word) {
           return before + '<strong>' + word + '</strong>';
         });
       });
       return result;
     }
 
-    function echapperHTML(s) {
+    function echapper(s) {
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     if (ingredientsTxt) {
       document.getElementById('ingredients').innerHTML =
-        mettreAllergenesEnGras(echapperHTML(ingredientsTxt), allergenesTxt || '');
+        mettreAllergenesEnGras(echapper(ingredientsTxt), allergenesTxt || '');
     }
     if (allergenesTxt) {
       document.getElementById('allergenes').innerHTML =
-        mettreAllergenesEnGras(echapperHTML(allergenesTxt), allergenesTxt);
-    }
-
-    var poids = lire('poids');
-    var poidsValeurG = 0;
-    if (poids !== null && poids !== '') {
-      document.getElementById('poids').textContent = poids;
-      var m = poids.match(/(\d+(?:[.,]\d+)?)\s*(kg|g)/i);
-      if (m) {
-        poidsValeurG = parseFloat(m[1].replace(',', '.'));
-        if (m[2].toLowerCase() === 'kg') poidsValeurG *= 1000;
-      }
-    } else {
-      document.getElementById('poidsWrap').style.display = 'none';
-    }
-
-    var w = parseFloat(params.get('w')) || 76;
-    var h = parseFloat(params.get('h')) || 51;
-    function vwmm(x) { return (x * w / 100).toFixed(3) + 'mm'; }
-
-    var poidsFontMM;
-    if      (poidsValeurG <= 50)   poidsFontMM = 2.8;
-    else if (poidsValeurG <= 200)  poidsFontMM = 4.2;
-    else if (poidsValeurG <= 1000) poidsFontMM = 5.6;
-    else                           poidsFontMM = 8.4;
-
-    function calculerEtAppliquer() {
-      var nomEl   = document.getElementById('nom');
-      nomEl.style.fontSize = '48px';
-      var dispoPx = nomEl.clientWidth;
-      var texteW  = nomEl.scrollWidth;
-      var fontePx = 48;
-      if (texteW > dispoPx) {
-        fontePx = Math.floor(48 * (dispoPx / texteW) * 0.96);
-        nomEl.style.fontSize = fontePx + 'px';
-      }
-      var titreMM = fontePx * (w * (dispoPx / 755)) / dispoPx;
-
-      var baseLineVw = 3.2, baseNutVw = 3.0, baseMarginVw = 1.3;
-      var minVw = 2.1, minMarginVw = 0.3, maxMarginVw = 3.0;
-
-      var nutritionEl  = document.querySelector('.nutrition-block');
-      var poidsEl      = document.getElementById('poidsWrap');
-      var poidsVisible = poidsEl && poidsEl.style.display !== 'none';
-      var poidsFontPx  = poidsFontMM * (472 / h);
-      var hReservePx   = poidsVisible ? Math.max(60, poidsFontPx + 30) : 60;
-      var espaceDispoPx = 472 - 15 - 3 - 30 - hReservePx;
-      var nutritionBottom = nutritionEl.offsetTop + nutritionEl.offsetHeight;
-
-      if (nutritionBottom > 0) {
-        var ratio = espaceDispoPx / nutritionBottom;
-        if (ratio > 1.0) {
-          baseMarginVw = Math.min(maxMarginVw, baseMarginVw * Math.min(ratio, 2.5));
-        } else if (ratio < 1.0) {
-          baseMarginVw = Math.max(minMarginVw, baseMarginVw * ratio);
-          if (baseMarginVw <= minMarginVw + 0.01) {
-            var economise = (1.3 - minMarginVw) * 4 * 7.55;
-            var deficit   = (nutritionBottom - espaceDispoPx) - economise;
-            if (deficit > 0) {
-              var fr = (nutritionBottom - deficit) / nutritionBottom;
-              baseLineVw = Math.max(minVw, baseLineVw * fr);
-              baseNutVw  = Math.max(minVw, baseNutVw  * fr);
-            }
-          }
-        }
-      }
-
-      document.getElementById('pageSize').textContent =
-        '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
-        '@media print {' +
-          'html, body { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }' +
-          '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; overflow: hidden !important; }' +
-          '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' ' + vwmm(3) + ' ' + vwmm(5.5) + ' ' + vwmm(3) + ' !important; display: flex !important; flex-direction: column !important; justify-content: space-evenly !important; }' +
-          '.title { font-size: ' + titreMM.toFixed(3) + 'mm !important; overflow: hidden !important; flex-shrink: 0 !important; }' +
-          '.line { font-size: ' + vwmm(baseLineVw) + ' !important; line-height: 1.2 !important; flex-shrink: 0 !important; }' +
-          '.nutrition-block { font-size: ' + vwmm(baseNutVw) + ' !important; line-height: 1.2 !important; flex-shrink: 0 !important; }' +
-          '.poids-value { font-size: ' + poidsFontMM + 'mm !important; font-weight: bold !important; white-space: nowrap !important; }' +
-          '.footer { position: absolute !important; bottom: ' + vwmm(2) + ' !important; left: ' + vwmm(3) + ' !important; right: ' + vwmm(3) + ' !important; font-size: ' + vwmm(2.7) + ' !important; align-items: baseline !important; gap: ' + vwmm(2) + ' !important; }' +
-          '.footer > div { white-space: nowrap !important; }' +
-        '}';
-    }
-
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(calculerEtAppliquer);
-    } else {
-      setTimeout(calculerEtAppliquer, 300);
+        mettreAllergenesEnGras(echapper(allergenesTxt), allergenesTxt);
     }
   })();
 </script>
