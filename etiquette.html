@@ -70,30 +70,28 @@
     <div class="produit-nom" id="produitNom">Nougat Traditionnel</div>
   </div>
 </div>
-<script>
-  (function () {
-    var params = new URLSearchParams(window.location.search);
-    var nom = params.get('nom');
-    if (nom) {
-      nom = decodeURIComponent(nom.replace(/\+/g, ' '));
-      document.getElementById('produitNom').textContent = nom;
-      document.title = nom;
-    }
-    var w = parseFloat(params.get('w')) || 76;
-    var h = parseFloat(params.get('h')) || 51;
-    var fontMM = (h * 0.1058).toFixed(2);
-    var letterMM = (h * 0.00529).toFixed(3);
-   document.getElementById('pageSize').textContent =
-      '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
-      '@media print {' +
-        'html, body { overflow: hidden !important; }' +
-        '.etiquette { width: ' + w + 'mm !important; height: ' + h + 'mm !important; overflow: hidden !important; }' +
-        '.bg { position: absolute !important; top: 0 !important; left: 0 !important; width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
-        '.bg svg { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
-        '.overlay { position: absolute !important; top: 0 !important; left: 0 !important; width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
-        '.produit-nom { font-size: ' + fontMM + 'mm !important; letter-spacing: ' + letterMM + 'mm !important; }' +
-      '}';
-  })();
-</script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var nom = params.get('nom');
+  if (nom) {
+    nom = decodeURIComponent(nom.replace(/\+/g, ' '));
+    document.getElementById('produitNom').textContent = nom;
+    document.title = nom;
+  }
+  var w = parseFloat(params.get('w')) || 76;
+  var h = parseFloat(params.get('h')) || 51;
+  var fontMM = (h * 0.1058).toFixed(2);
+  var letterMM = (h * 0.00529).toFixed(3);
+  document.getElementById('pageSize').textContent =
+    '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
+    '@media print {' +
+      'html, body { margin: 0 !important; padding: 0 !important; width: ' + w + 'mm !important; height: ' + h + 'mm !important; overflow: hidden !important; }' +
+      '.etiquette { position: relative !important; top: auto !important; left: auto !important; width: ' + w + 'mm !important; height: ' + h + 'mm !important; overflow: hidden !important; }' +
+      '.bg { position: absolute !important; top: 0 !important; left: 0 !important; width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
+      '.bg svg { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
+      '.overlay { position: absolute !important; top: 0 !important; left: 0 !important; width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
+      '.produit-nom { font-size: ' + fontMM + 'mm !important; letter-spacing: ' + letterMM + 'mm !important; }' +
+    '}';
+})();
 </body>
 </html>
