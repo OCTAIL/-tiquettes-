@@ -1,24 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap');
+        
+        body { background: #ccc; display: flex; justify-content: center; padding: 20px; }
+        
+        /* Conteneur principal avec le fond bleu */
+        .etiquette-fond {
+            width: 755px;
+            height: 472px;
+            background-color: #1a3a8a;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        /* Cadre doré interne */
+        .cadre-dore {
+            width: 100%;
+            height: 100%;
+            border: 3px solid #c5a059;
+            color: #fff;
+            font-family: 'Arial Narrow', Arial, 'Helvetica Neue', Helvetica, sans-serif;
+            padding: 30px 30px 70px 30px;
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+        }
+
+        .title {
+            font-size: 48px; color: #c5a059; text-align: center;
+            font-weight: bold; text-transform: uppercase;
+            font-family: 'Cormorant Garamond', serif;
+            white-space: nowrap;
+            margin: 0;
+            flex-shrink: 0;
+        }
+        .line { font-size: 24px; line-height: 1.4; margin: 0; flex-shrink: 0; }
+        .label-name { font-weight: bold; color: #c5a059; }
+        
+        .nutrition-block { font-size: 24px; line-height: 1.4; margin: 0; flex-shrink: 0; }
+
+        /* Le poids fait partie du footer mais en taille adaptée selon le Décret 78-166 */
+        .poids-cell { font-weight: bold; }
+
+        .footer {
+            position: absolute; bottom: 30px; left: 30px; right: 30px;
+            display: flex; justify-content: space-between; font-size: 24px;
+            align-items: baseline;
+        }
+    </style>
+    <style id="pageSize"></style>
+</head>
+<body>
+
+<div class="etiquette-fond">
+    <div class="cadre-dore">
+        <div class="title" id="nom">NOUGAT TRADITIONNEL</div>
+        
+        <div class="line"><span class="label-name">Ingrédients :</span> <span id="ingredients">sucre, sirop de glucose, amandes, miel de lavande, pistaches, blanc d'œuf</span></div>
+        <div class="line"><span class="label-name">Allergènes :</span> <span id="allergenes">amandes, œufs</span></div>
+        
+        <div class="nutrition-block">
+            <span class="label-name">Val. nutritionnelles / 100g :</span> <span id="valeurs">Énergie 1623 kJ / 383 kcal - MG 10,16 g dont AGS 0,81 Glucides 67,92 g dont sucres 53,61 g - Protéines 5,09 g - Sel 0,14 g</span>
+        </div>
+
+        <div class="footer">
+            <div><span class="label-name">Lot :</span> <span id="lot">XXXXXXXX</span></div>
+            <div id="poidsWrap" class="poids-cell"><span class="label-name">Poids env :</span> <span id="poids" class="poids-value">000 g</span></div>
+            <div><span class="label-name">DDM :</span> <span id="dluo">JJ/MM/AAAA</span></div>
+        </div>
+    </div>
+</div>
+
 <script>
   (function () {
     var params = new URLSearchParams(window.location.search);
+
+    function lire(cle) {
+      var v = params.get(cle);
+      if (v === null) return null;
+      try { return decodeURIComponent(v.replace(/\+/g, ' ')); }
+      catch (e) { return v.replace(/\+/g, ' '); }
+    }
+
+    function remplir(id, cle) {
+      var v = lire(cle);
+      if (v !== null && v !== '') {
+        document.getElementById(id).textContent = v;
+        return v;
+      }
+      return null;
+    }
+
+    var nom = remplir('nom', 'nom');
+    if (nom) document.title = nom;
+
+    var ingredientsTxt = lire('ingredients');
+    var allergenesTxt = lire('allergenes');
+    remplir('valeurs', 'valeurs');
+    remplir('lot', 'lot');
+    remplir('dluo', 'dluo');
+
+    // --- Conformité INCO : mettre les allergènes EN GRAS dans la liste des ingrédients ---
+    // L'INCO impose que les allergènes soient mis en évidence dans la liste des ingrédients
+    // (Article 21 / Annexe II du règlement UE 1169/2011).
+    // On applique aussi le gras dans la ligne Allergènes pour renforcer la visibilité.
+    function mettreAllergenesEnGras(texteHtml, allergenesText) {
+      if (!texteHtml || !allergenesText) return texteHtml;
+      // Extraire les mots-clés courts (avant les éventuelles mentions de précaution longues)
+      var tokens = allergenesText.split(/[,;.]/)
+        .map(function(s) { return s.trim(); })
+        .filter(function(s) {
+          if (!s) return false;
+          var lower = s.toLowerCase();
+          if (lower.indexOf('fabriqu') !== -1) return false;
+          if (lower.indexOf('atelier') !== -1) return false;
+          if (lower.indexOf('utilise') !== -1) return false;
+          if (lower.indexOf('peut contenir') !== -1) return false;
+          return s.split(/\s+/).length <= 3 && s.length >= 3 && s.length <= 30;
+        });
+
+      // Dédupliquer les tokens (insensible à la casse)
+      var seen = {};
+      tokens = tokens.filter(function(t) {
+        var key = t.toLowerCase();
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      });
+
+      var result = texteHtml;
+      tokens.forEach(function(token) {
+        var escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Pas de 'g' : on ne met en gras QUE LA PREMIÈRE OCCURRENCE
+        var regex = new RegExp('(^|[^A-Za-z\u00C0-\u00FF])(' + escaped + 's?)(?=[^A-Za-z\u00C0-\u00FF]|$)', 'i');
+        result = result.replace(regex, function(match, before, word) {
+          return before + '<strong>' + word + '</strong>';
+        });
+      });
+      return result;
+    }
+
+    function echapperHTML(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     var nom = params.get('nom');
     if (nom) {
       nom = decodeURIComponent(nom.replace(/\+/g, ' '));
       document.getElementById('produitNom').textContent = nom;
       document.title = nom;
     }
+
+    if (ingredientsTxt) {
+      document.getElementById('ingredients').innerHTML =
+        mettreAllergenesEnGras(echapperHTML(ingredientsTxt), allergenesTxt || '');
+    }
+    if (allergenesTxt) {
+      document.getElementById('allergenes').innerHTML =
+        mettreAllergenesEnGras(echapperHTML(allergenesTxt), allergenesTxt);
+    }
+
+    // --- Poids : présent seulement pour le conditionnement ---
+    var poids = lire('poids');
+    var poidsValeurG = 0;
+    if (poids !== null && poids !== '') {
+      document.getElementById('poids').textContent = poids;
+      // Extraire la valeur numérique en grammes pour calculer la taille requise
+      var m = poids.match(/(\d+(?:[.,]\d+)?)\s*(kg|g)/i);
+      if (m) {
+        poidsValeurG = parseFloat(m[1].replace(',', '.'));
+        if (m[2].toLowerCase() === 'kg') poidsValeurG *= 1000;
+      }
+    } else {
+      document.getElementById('poidsWrap').style.display = 'none';
+    }
+
+    // --- Dimensions de l'étiquette : ?w=76&h=50 (mm) ---
+    var w = parseFloat(params.get('w')) || 76;
     var w = parseFloat(params.get('w')) || 80;
     var h = parseFloat(params.get('h')) || 50;
+    function vwmm(x) { return (x * w / 100).toFixed(3) + 'mm'; }
 
-    // Style inline sur body — priorité absolue, écrase min-height:100vh
-    document.body.style.minHeight = '0px';
-    document.body.style.height = h + 'mm';
-    document.body.style.overflow = 'hidden';
+    // --- Taille du poids selon Décret 78-166 (hauteur des chiffres) ---
+    // ≤ 50g : 2mm | 50-200g : 3mm | 200g-1kg : 4mm | >1kg : 6mm
+    // font-size ≈ hauteur_chiffre / 0.72 (cap-height d'une police)
+    var poidsFontMM;
+    if (poidsValeurG <= 50) poidsFontMM = 2.8;
+    else if (poidsValeurG <= 200) poidsFontMM = 4.2;   // chiffres ≥ 3 mm
+    else if (poidsValeurG <= 1000) poidsFontMM = 5.6;  // chiffres ≥ 4 mm
+    else poidsFontMM = 8.4;                            // chiffres ≥ 6 mm
 
+    // --- Titre adaptatif : on mesure la largeur réelle pour que ça tienne sur 1 ligne ---
+    function calculerEtAppliquer() {
+      var nomEl = document.getElementById('nom');
+      nomEl.style.fontSize = '48px';
+      var dispoPx = nomEl.clientWidth;
+      var texteW = nomEl.scrollWidth;
+      var fontePx = 48;
+      if (texteW > dispoPx) {
+        fontePx = Math.floor(48 * (dispoPx / texteW) * 0.96);
+        nomEl.style.fontSize = fontePx + 'px';
+      }
+      var fractionLargeur = dispoPx / 755;
+      var zoneTitreMM = w * fractionLargeur;
+      var titreMM = fontePx * zoneTitreMM / dispoPx;
+
+      // --- Auto-fit du contenu ---
+      // Stratégie : ajuster les ESPACES en priorité (marges entre sections).
+      // Les fontes ne sont touchées qu'en dernier recours pour respecter le min INCO.
+      var baseLineVw = 3.2, baseNutVw = 3.0, baseMarginVw = 1.3;
+      // Minimum INCO : 0.9mm hauteur de x ≈ 1.6mm font-size → en vw : 1.6/76*100 = 2.1vw
+      var minVw = 2.1;
+      // Marges : min serré (0.3vw) et max aéré (3.0vw)
+      var minMarginVw = 0.3, maxMarginVw = 3.0;
+
+      // Mesure : on compare la position basse du contenu avec le haut de la zone footer.
+      var nutritionEl = document.querySelector('.nutrition-block');
+      var poidsEl = document.getElementById('poidsWrap');
+      var footerEl = document.querySelector('.footer');
+      var poidsVisible = poidsEl && poidsEl.style.display !== 'none';
+
+      // Espace réservé en bas (px à l'écran) : footer (+ poids si présent)
+      var poidsFontPx = poidsFontMM * (472 / h);
+      var hReservePx = poidsVisible ? Math.max(60, poidsFontPx + 30) : 60;
+      var espaceDispoPx = 472 - 15 - 3 - 30 - hReservePx;
+
+      var nutritionBottom = nutritionEl.offsetTop + nutritionEl.offsetHeight;
+
+      if (nutritionBottom > 0) {
+        var ratio = espaceDispoPx / nutritionBottom;
+        if (ratio > 1.0) {
+          // Auto-grow : agrandir les marges (pas les fontes), avec cap à 2.5x
+          var capRatio = Math.min(ratio, 2.5);
+          baseMarginVw = Math.min(maxMarginVw, baseMarginVw * capRatio);
+        } else if (ratio < 1.0) {
+          // Auto-shrink : réduire les marges
+          baseMarginVw = Math.max(minMarginVw, baseMarginVw * ratio);
+          // Si marges au mini et ça déborde encore, réduire les fontes (respect INCO)
+          if (baseMarginVw <= minMarginVw + 0.01) {
+            // Estimation du débordement résiduel après réduction des marges
+            // 4 marges réduites de (1.3 - 0.3) vw = 4 vw total
+            // Conversion vw → px à l'écran : 1vw = 7.55px (755/100), 1px = 0.139vw approx
+            var economiseEnPx = (1.3 - minMarginVw) * 4 * 7.55;
+            var resteDeficitPx = (nutritionBottom - espaceDispoPx) - economiseEnPx;
+            if (resteDeficitPx > 0) {
+              var fonteRatio = (nutritionBottom - resteDeficitPx) / nutritionBottom;
+              baseLineVw = Math.max(minVw, baseLineVw * fonteRatio);
+              baseNutVw = Math.max(minVw, baseNutVw * fonteRatio);
+            }
+          }
+        }
+      }
+
+      document.getElementById('pageSize').textContent =
+        '@page { margin: 0; }' +
+        '@media print {' +
+          'html, body { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }' +
+          '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; overflow: hidden !important; }' +
+          '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' ' + vwmm(3) + ' ' + vwmm(5.5) + ' ' + vwmm(3) + ' !important; display: flex !important; flex-direction: column !important; justify-content: space-evenly !important; }' +
+          '.title { font-size: ' + titreMM.toFixed(3) + 'mm !important; margin-bottom: 0 !important; overflow: hidden !important; flex-shrink: 0 !important; }' +
+          '.line { font-size: ' + vwmm(baseLineVw) + ' !important; margin-bottom: 0 !important; line-height: 1.2 !important; flex-shrink: 0 !important; }' +
+          '.nutrition-block { font-size: ' + vwmm(baseNutVw) + ' !important; line-height: 1.2 !important; margin-bottom: 0 !important; flex-shrink: 0 !important; }' +
+          '.poids-value { font-size: ' + poidsFontMM + 'mm !important; font-weight: bold !important; white-space: nowrap !important; }' +
+          '.footer { position: absolute !important; bottom: ' + vwmm(2) + ' !important; left: ' + vwmm(3) + ' !important; right: ' + vwmm(3) + ' !important; font-size: ' + vwmm(2.7) + ' !important; align-items: baseline !important; gap: ' + vwmm(2) + ' !important; }' +
+          '.footer > div { white-space: nowrap !important; }' +
+        '}';
+    }
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(calculerEtAppliquer);
+    } else {
+      setTimeout(calculerEtAppliquer, 300);
+    }
     var fontMM = (h * 0.1058).toFixed(2);
     var letterMM = (h * 0.00529).toFixed(3);
     document.getElementById('pageSize').textContent =
-      '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
+      '@page { margin: 0; }' +
       '@media print {' +
         'html, body { min-height: 0 !important; height: ' + h + 'mm !important; width: ' + w + 'mm !important; }' +
         '.etiquette { width: ' + w + 'mm !important; height: ' + h + 'mm !important; }' +
@@ -26,3 +286,6 @@
       '}';
   })();
 </script>
+
+</body>
+</html>
