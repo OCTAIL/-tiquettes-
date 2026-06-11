@@ -5,10 +5,10 @@
   <title>Étiquette Recto</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#1a1a1a; display:flex; align-items:center; justify-content:center; }
-    .etiquette { position:relative; width:302px; height:189px; overflow:hidden; }
-    .bg { position:absolute; top:0; left:0; }
-    .bg svg { width:302px; height:189px; display:block; }
+    body { width:76mm; height:51mm; background:white; position:relative; }
+.etiquette { position:relative; width:76mm; height:51mm; overflow:hidden; }
+.bg { position:absolute; top:0; left:0; width:76mm; height:51mm; }
+.bg svg { width:76mm; height:51mm; display:block; }
     .overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
 
     .produit-nom {
@@ -32,45 +32,10 @@
     /* Impression : l'étiquette remplit toute la page, sans marge.
        La taille de page (@page) est définie dynamiquement par le script
        à partir des paramètres ?w= et ?h= (en mm) de l'URL. */
+@page { margin:0; size:76mm 51mm; }
 @media print {
-  html {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  body {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 76mm !important;
-    height: 51mm !important;
-    overflow: hidden !important;
-    background: #ffffff !important;
-    display: block !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .etiquette {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    overflow: hidden;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .bg, .bg svg, .overlay {
-    width: 100% !important;
-    height: 100% !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .produit-nom {
-    top: 53.97% !important;
-    left: 10.6% !important;
-    width: 80.8% !important;
-    height: 7.4% !important;
-  }
+  html, body { margin:0 !important; padding:0 !important; }
+  .etiquette, .bg, .bg svg, .overlay { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
 }
   </style>
   <style id="pageSize"></style>
@@ -91,64 +56,6 @@
     document.getElementById('produitNom').textContent = nom;
     document.title = nom;
   }
-  var w = parseFloat(params.get('w')) || 76;
-  var h = parseFloat(params.get('h')) || 51;
-  var fontMM = (h * 0.1058).toFixed(2);
-  var letterMM = (h * 0.00529).toFixed(3);
-
-  document.getElementById('pageSize').textContent =
-    '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }';
-
-  window.addEventListener('beforeprint', function () {
-    var s = document.documentElement.style;
-    s.setProperty('margin', '0', 'important');
-    s.setProperty('padding', '0', 'important');
-
-    var b = document.body.style;
-    b.setProperty('position', 'absolute', 'important');
-    b.setProperty('top', '0', 'important');
-    b.setProperty('left', '0', 'important');
-    b.setProperty('margin', '0', 'important');
-    b.setProperty('padding', '0', 'important');
-    b.setProperty('width', w + 'mm', 'important');
-    b.setProperty('height', h + 'mm', 'important');
-    b.setProperty('overflow', 'hidden', 'important');
-    b.setProperty('display', 'block', 'important');
-
-    var etiquette = document.querySelector('.etiquette');
-    etiquette.style.setProperty('position', 'relative', 'important');
-    etiquette.style.setProperty('top', 'auto', 'important');
-    etiquette.style.setProperty('left', 'auto', 'important');
-    etiquette.style.setProperty('width', w + 'mm', 'important');
-    etiquette.style.setProperty('height', h + 'mm', 'important');
-    etiquette.style.setProperty('overflow', 'hidden', 'important');
-
-    var bg = document.querySelector('.bg');
-    bg.style.setProperty('position', 'absolute', 'important');
-    bg.style.setProperty('top', '0', 'important');
-    bg.style.setProperty('left', '0', 'important');
-    bg.style.setProperty('width', w + 'mm', 'important');
-    bg.style.setProperty('height', h + 'mm', 'important');
-
-    var bgSvg = document.querySelector('.bg svg');
-    bgSvg.style.setProperty('width', w + 'mm', 'important');
-    bgSvg.style.setProperty('height', h + 'mm', 'important');
-
-    var overlay = document.querySelector('.overlay');
-    overlay.style.setProperty('position', 'absolute', 'important');
-    overlay.style.setProperty('top', '0', 'important');
-    overlay.style.setProperty('left', '0', 'important');
-    overlay.style.setProperty('width', w + 'mm', 'important');
-    overlay.style.setProperty('height', h + 'mm', 'important');
-
-    var produitNom = document.getElementById('produitNom');
-    produitNom.style.setProperty('top', '53.97%', 'important');
-    produitNom.style.setProperty('left', '10.6%', 'important');
-    produitNom.style.setProperty('width', '80.8%', 'important');
-    produitNom.style.setProperty('height', '7.4%', 'important');
-    produitNom.style.setProperty('font-size', fontMM + 'mm', 'important');
-    produitNom.style.setProperty('letter-spacing', letterMM + 'mm', 'important');
-  });
 })();
 </script>
 </body>
