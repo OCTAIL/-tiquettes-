@@ -150,14 +150,10 @@ function imprimer(mode) {
 
   if (url) {
     var w = window.open(url);
-    w.onload = function () {
-      setTimeout(function () {
-        w.print();
-        setTimeout(function () { w.close(); }, 2000);
-      }, 500);
-    };
+    setTimeout(function () {
+      w.print();
+    }, 2000);
   } else {
-    // Mode "all" : les deux pages en séquence
     setTimeout(function () { window.print(); }, 100);
   }
 }
