@@ -32,29 +32,38 @@
     /* Impression : l'étiquette remplit toute la page, sans marge.
        La taille de page (@page) est définie dynamiquement par le script
        à partir des paramètres ?w= et ?h= (en mm) de l'URL. */
- @media print {
-  html, body {
-    margin:0; padding:0;
+@media print {
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     width: 76mm !important;
     height: 51mm !important;
-    background:#ffffff !important;
-    display:block !important;
     overflow: hidden !important;
-    -webkit-print-color-adjust:exact;
-    print-color-adjust:exact;
+    background: #ffffff !important;
+    display: block !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .etiquette {
-    position:relative !important;
-    top:auto !important;
-    left:auto !important;
-    overflow:hidden;
-    -webkit-print-color-adjust:exact;
-    print-color-adjust:exact;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    overflow: hidden;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .bg, .bg svg, .overlay {
-    width:100% !important; height:100% !important;
-    -webkit-print-color-adjust:exact;
-    print-color-adjust:exact;
+    width: 100% !important;
+    height: 100% !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .produit-nom {
     top: 53.97% !important;
