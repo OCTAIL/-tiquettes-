@@ -52,6 +52,31 @@
             display: flex; justify-content: space-between; font-size: 24px;
             align-items: baseline;
         }
+    @page { margin: 0; size: 76mm 51mm; }
+
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 76mm !important;
+    height: 51mm !important;
+    display: block !important;
+    overflow: hidden !important;
+  }
+  .etiquette-fond {
+    width: 76mm !important;
+    height: 51mm !important;
+    padding: 1.5mm !important;
+  }
+  .cadre-dore {
+    padding: 2mm 2mm 6mm 2mm !important;
+  }
+  .title { font-size: 5mm !important; }
+  .line { font-size: 2.2mm !important; line-height: 1.2 !important; }
+  .nutrition-block { font-size: 2mm !important; line-height: 1.2 !important; }
+  .footer { font-size: 1.9mm !important; bottom: 1.5mm !important; left: 2mm !important; right: 2mm !important; }
+}
     </style>
     <style id="pageSize"></style>
 </head>
