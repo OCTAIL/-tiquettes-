@@ -52,30 +52,40 @@
             display: flex; justify-content: space-between; font-size: 24px;
             align-items: baseline;
         }
-    @page { margin: 0; size: 76mm 51mm; }
+  @page { margin: 0; size: 76mm 51mm; }
 
 @media print {
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   html, body {
     margin: 0 !important;
     padding: 0 !important;
+    display: block !important;
     width: 76mm !important;
     height: 51mm !important;
-    display: block !important;
     overflow: hidden !important;
+    background: transparent !important;
+    position: relative !important;
   }
   .etiquette-fond {
-    width: 76mm !important;
-    height: 51mm !important;
-    padding: 1.5mm !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 755px !important;
+    height: 472px !important;
+    padding: 15px !important;
+    transform: scale(0.38) !important;
+    transform-origin: top left !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   .cadre-dore {
-    padding: 2mm 2mm 6mm 2mm !important;
+    padding: 30px 30px 70px 30px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  .title { font-size: 5mm !important; }
-  .line { font-size: 2.2mm !important; line-height: 1.2 !important; }
-  .nutrition-block { font-size: 2mm !important; line-height: 1.2 !important; }
-  .footer { font-size: 1.9mm !important; bottom: 1.5mm !important; left: 2mm !important; right: 2mm !important; }
+  .title { font-size: 48px !important; }
+  .line { font-size: 24px !important; }
+  .nutrition-block { font-size: 24px !important; }
+  .footer { font-size: 24px !important; bottom: 30px !important; left: 30px !important; right: 30px !important; }
 }
     </style>
     <style id="pageSize"></style>
