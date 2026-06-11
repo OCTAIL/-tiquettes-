@@ -32,7 +32,7 @@
     /* Impression : l'étiquette remplit toute la page, sans marge.
        La taille de page (@page) est définie dynamiquement par le script
        à partir des paramètres ?w= et ?h= (en mm) de l'URL. */
-    @media print {
+ @media print {
   html, body {
     margin:0; padding:0;
     background:#ffffff !important;
@@ -41,7 +41,9 @@
     print-color-adjust:exact;
   }
   .etiquette {
-    position:fixed; top:0; left:0;
+    position:relative !important;
+    top:auto !important;
+    left:auto !important;
     overflow:hidden;
     -webkit-print-color-adjust:exact;
     print-color-adjust:exact;
