@@ -33,33 +33,31 @@
        La taille de page (@page) est définie dynamiquement par le script
        à partir des paramètres ?w= et ?h= (en mm) de l'URL. */
     @media print {
-      html, body {
-        margin:0; padding:0;
-        background:#ffffff !important;
-        display:block !important;
-        -webkit-print-color-adjust:exact;
-        print-color-adjust:exact;
-      }
-      .etiquette {
-        position:absolute; top:0; left:0;
-        overflow:hidden;
-        -webkit-print-color-adjust:exact;
-        print-color-adjust:exact;
-      }
-      .bg, .bg svg, .overlay {
-        width:100% !important; height:100% !important;
-        -webkit-print-color-adjust:exact;
-        print-color-adjust:exact;
-      }
-      /* Le nom produit doit suivre le scaling de la page : positions et taille
-         exprimées en pourcentage du conteneur et en vw pour la police. */
-      .produit-nom {
-        top: 53.97% !important;
-        left: 10.6% !important;
-        width: 80.8% !important;
-        height: 7.4% !important;
-      }
-    }
+  html, body {
+    margin:0; padding:0;
+    background:#ffffff !important;
+    display:block !important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .etiquette {
+    position:fixed; top:0; left:0;
+    overflow:hidden;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .bg, .bg svg, .overlay {
+    width:100% !important; height:100% !important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .produit-nom {
+    top: 53.97% !important;
+    left: 10.6% !important;
+    width: 80.8% !important;
+    height: 7.4% !important;
+  }
+}
   </style>
   <style id="pageSize"></style>
 </head>
