@@ -3,92 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap');
-        
-        body { background: #ccc; display: flex; justify-content: center; padding: 20px; }
-        
-        /* Conteneur principal avec le fond bleu */
-        .etiquette-fond {
-            width: 755px;
-            height: 472px;
-            background-color: #1a3a8a;
-            padding: 15px;
-            box-sizing: border-box;
-        }
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap');
 
-        /* Cadre doré interne */
-        .cadre-dore {
-            width: 100%;
-            height: 100%;
-            border: 3px solid #c5a059;
-            color: #fff;
-            font-family: 'Arial Narrow', Arial, 'Helvetica Neue', Helvetica, sans-serif;
-            padding: 30px 30px 70px 30px;
-            box-sizing: border-box;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-evenly;
-        }
+  body { background: #ccc; display: flex; justify-content: center; padding: 20px; }
 
-        .title {
-            font-size: 48px; color: #c5a059; text-align: center;
-            font-weight: bold; text-transform: uppercase;
-            font-family: 'Cormorant Garamond', serif;
-            white-space: nowrap;
-            margin: 0;
-            flex-shrink: 0;
-        }
-        .line { font-size: 24px; line-height: 1.4; margin: 0; flex-shrink: 0; }
-        .label-name { font-weight: bold; color: #c5a059; }
-        
-        .nutrition-block { font-size: 24px; line-height: 1.4; margin: 0; flex-shrink: 0; }
-
-        /* Le poids fait partie du footer mais en taille adaptée selon le Décret 78-166 */
-        .poids-cell { font-weight: bold; }
-
-        .footer {
-            position: absolute; bottom: 30px; left: 30px; right: 30px;
-            display: flex; justify-content: space-between; font-size: 24px;
-            align-items: baseline;
-        }
-  @page { margin: 0; size: 76mm 51mm; }
-
-@media print {
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-    width: 76mm !important;
-    height: 51mm !important;
-    overflow: hidden !important;
-    background: transparent !important;
-    position: relative !important;
-  }
   .etiquette-fond {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 755px !important;
-    height: 472px !important;
-    padding: 15px !important;
-    transform: scale(0.38) !important;
-    transform-origin: top left !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    width: 76mm;
+    height: 51mm;
+    background-color: #1a3a8a;
+    padding: 1.5mm;
+    box-sizing: border-box;
   }
   .cadre-dore {
-    padding: 30px 30px 70px 30px !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    width: 100%; height: 100%;
+    border: 0.4mm solid #c5a059;
+    color: #fff;
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    padding: 2mm 2mm 7mm 2mm;
+    box-sizing: border-box;
+    position: relative;
+    display: flex; flex-direction: column; justify-content: space-evenly;
   }
-  .title { font-size: 48px !important; }
-  .line { font-size: 24px !important; }
-  .nutrition-block { font-size: 24px !important; }
-  .footer { font-size: 24px !important; bottom: 30px !important; left: 30px !important; right: 30px !important; }
-}
-    </style>
-    <style id="pageSize"></style>
+  .title { font-size: 5mm; color: #c5a059; text-align: center; font-weight: bold; text-transform: uppercase; font-family: 'Cormorant Garamond', serif; white-space: nowrap; margin: 0; flex-shrink: 0; }
+  .line { font-size: 2.2mm; line-height: 1.3; margin: 0; flex-shrink: 0; }
+  .label-name { font-weight: bold; color: #c5a059; }
+  .nutrition-block { font-size: 2mm; line-height: 1.3; margin: 0; flex-shrink: 0; }
+  .poids-cell { font-weight: bold; }
+  .footer { position: absolute; bottom: 1.5mm; left: 2mm; right: 2mm; display: flex; justify-content: space-between; font-size: 1.9mm; align-items: baseline; }
+
+  @page { margin: 0; size: 76mm 51mm; }
+
+  @media print {
+    html, body { margin: 0 !important; padding: 0 !important; width: 76mm !important; height: 51mm !important; display: block !important; overflow: hidden !important; }
+    .etiquette-fond { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .cadre-dore { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+<style id="pageSize"></style>
 </head>
 <body>
 
@@ -221,89 +172,6 @@
     else if (poidsValeurG <= 200) poidsFontMM = 4.2;   // chiffres ≥ 3 mm
     else if (poidsValeurG <= 1000) poidsFontMM = 5.6;  // chiffres ≥ 4 mm
     else poidsFontMM = 8.4;                            // chiffres ≥ 6 mm
-
-    // --- Titre adaptatif : on mesure la largeur réelle pour que ça tienne sur 1 ligne ---
-    function calculerEtAppliquer() {
-      var nomEl = document.getElementById('nom');
-      nomEl.style.fontSize = '48px';
-      var dispoPx = nomEl.clientWidth;
-      var texteW = nomEl.scrollWidth;
-      var fontePx = 48;
-      if (texteW > dispoPx) {
-        fontePx = Math.floor(48 * (dispoPx / texteW) * 0.96);
-        nomEl.style.fontSize = fontePx + 'px';
-      }
-      var fractionLargeur = dispoPx / 755;
-      var zoneTitreMM = w * fractionLargeur;
-      var titreMM = fontePx * zoneTitreMM / dispoPx;
-
-      // --- Auto-fit du contenu ---
-      // Stratégie : ajuster les ESPACES en priorité (marges entre sections).
-      // Les fontes ne sont touchées qu'en dernier recours pour respecter le min INCO.
-      var baseLineVw = 3.2, baseNutVw = 3.0, baseMarginVw = 1.3;
-      // Minimum INCO : 0.9mm hauteur de x ≈ 1.6mm font-size → en vw : 1.6/76*100 = 2.1vw
-      var minVw = 2.1;
-      // Marges : min serré (0.3vw) et max aéré (3.0vw)
-      var minMarginVw = 0.3, maxMarginVw = 3.0;
-
-      // Mesure : on compare la position basse du contenu avec le haut de la zone footer.
-      var nutritionEl = document.querySelector('.nutrition-block');
-      var poidsEl = document.getElementById('poidsWrap');
-      var footerEl = document.querySelector('.footer');
-      var poidsVisible = poidsEl && poidsEl.style.display !== 'none';
-
-      // Espace réservé en bas (px à l'écran) : footer (+ poids si présent)
-      var poidsFontPx = poidsFontMM * (472 / h);
-      var hReservePx = poidsVisible ? Math.max(60, poidsFontPx + 30) : 60;
-      var espaceDispoPx = 472 - 15 - 3 - 30 - hReservePx;
-
-      var nutritionBottom = nutritionEl.offsetTop + nutritionEl.offsetHeight;
-
-      if (nutritionBottom > 0) {
-        var ratio = espaceDispoPx / nutritionBottom;
-        if (ratio > 1.0) {
-          // Auto-grow : agrandir les marges (pas les fontes), avec cap à 2.5x
-          var capRatio = Math.min(ratio, 2.5);
-          baseMarginVw = Math.min(maxMarginVw, baseMarginVw * capRatio);
-        } else if (ratio < 1.0) {
-          // Auto-shrink : réduire les marges
-          baseMarginVw = Math.max(minMarginVw, baseMarginVw * ratio);
-          // Si marges au mini et ça déborde encore, réduire les fontes (respect INCO)
-          if (baseMarginVw <= minMarginVw + 0.01) {
-            // Estimation du débordement résiduel après réduction des marges
-            // 4 marges réduites de (1.3 - 0.3) vw = 4 vw total
-            // Conversion vw → px à l'écran : 1vw = 7.55px (755/100), 1px = 0.139vw approx
-            var economiseEnPx = (1.3 - minMarginVw) * 4 * 7.55;
-            var resteDeficitPx = (nutritionBottom - espaceDispoPx) - economiseEnPx;
-            if (resteDeficitPx > 0) {
-              var fonteRatio = (nutritionBottom - resteDeficitPx) / nutritionBottom;
-              baseLineVw = Math.max(minVw, baseLineVw * fonteRatio);
-              baseNutVw = Math.max(minVw, baseNutVw * fonteRatio);
-            }
-          }
-        }
-      }
-
-      document.getElementById('pageSize').textContent =
-        '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
-        '@media print {' +
-          'html, body { margin: 0 !important; padding: 0 !important; width: ' + w + 'mm !important; height: ' + h + 'mm !important; display: block !important; overflow: hidden !important; }' +
-          '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; overflow: hidden !important; }' +
-          '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' ' + vwmm(3) + ' ' + vwmm(5.5) + ' ' + vwmm(3) + ' !important; display: flex !important; flex-direction: column !important; justify-content: space-evenly !important; }' +
-          '.title { font-size: ' + titreMM.toFixed(3) + 'mm !important; margin-bottom: 0 !important; overflow: hidden !important; flex-shrink: 0 !important; }' +
-          '.line { font-size: ' + vwmm(baseLineVw) + ' !important; margin-bottom: 0 !important; line-height: 1.2 !important; flex-shrink: 0 !important; }' +
-          '.nutrition-block { font-size: ' + vwmm(baseNutVw) + ' !important; line-height: 1.2 !important; margin-bottom: 0 !important; flex-shrink: 0 !important; }' +
-          '.poids-value { font-size: ' + poidsFontMM + 'mm !important; font-weight: bold !important; white-space: nowrap !important; }' +
-          '.footer { position: absolute !important; bottom: ' + vwmm(2) + ' !important; left: ' + vwmm(3) + ' !important; right: ' + vwmm(3) + ' !important; font-size: ' + vwmm(2.7) + ' !important; align-items: baseline !important; gap: ' + vwmm(2) + ' !important; }' +
-          '.footer > div { white-space: nowrap !important; }' +
-        '}';
-    }
-
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(calculerEtAppliquer);
-    } else {
-      setTimeout(calculerEtAppliquer, 300);
-    }
   })();
 </script>
 
