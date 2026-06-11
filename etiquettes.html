@@ -143,19 +143,24 @@
   document.getElementById('frVerso').src = 'etiquette.verso.html' + search;
 
   // Lance l'impression selon le mode demandé : 'all', 'recto' ou 'verso'.
-  function imprimer(mode) {
-    if (mode === 'recto') document.body.classList.add('mode-recto');
-    else if (mode === 'verso') document.body.classList.add('mode-verso');
-    // mode === 'all' : aucune classe, les deux s'impriment.
-    // Petit délai pour laisser le navigateur appliquer le style avant d'imprimer.
-    setTimeout(function () {
-      window.print();
-      // Restaurer l'affichage normal après le dialogue d'impression.
+function imprimer(mode) {
+  var url;
+  if (mode === 'verso') url = 'etiquette.verso.html' + search;
+  else if (mode === 'recto') url = 'etiquette.html' + search;
+
+  if (url) {
+    var w = window.open(url);
+    w.onload = function () {
       setTimeout(function () {
-        document.body.classList.remove('mode-recto', 'mode-verso');
-      }, 300);
-    }, 100);
+        w.print();
+        setTimeout(function () { w.close(); }, 2000);
+      }, 500);
+    };
+  } else {
+    // Mode "all" : les deux pages en séquence
+    setTimeout(function () { window.print(); }, 100);
   }
+}
 </script>
 
 </body>
