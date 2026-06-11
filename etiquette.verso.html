@@ -250,9 +250,9 @@
       }
 
       document.getElementById('pageSize').textContent =
-        '@page { margin: 0; }' +
+        '@page { margin: 0; size: ' + w + 'mm ' + h + 'mm; }' +
         '@media print {' +
-          'html, body { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }' +
+          'html, body { margin: 0 !important; padding: 0 !important; width: ' + w + 'mm !important; height: ' + h + 'mm !important; display: block !important; overflow: hidden !important; }' +
           '.etiquette-fond { width: ' + w + 'mm !important; height: ' + h + 'mm !important; padding: ' + vwmm(2.5) + ' !important; overflow: hidden !important; }' +
           '.cadre-dore { border-width: ' + vwmm(0.4) + ' !important; padding: ' + vwmm(3) + ' ' + vwmm(3) + ' ' + vwmm(5.5) + ' ' + vwmm(3) + ' !important; display: flex !important; flex-direction: column !important; justify-content: space-evenly !important; }' +
           '.title { font-size: ' + titreMM.toFixed(3) + 'mm !important; margin-bottom: 0 !important; overflow: hidden !important; flex-shrink: 0 !important; }' +
