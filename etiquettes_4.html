@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Étiquettes recto + verso</title>
+  <style>
+    /* ========== Affichage à l'écran ========== */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f0f0f0;
+      color: #222;
+    }
+
+    /* Barre d'outils en haut avec les boutons d'impression */
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #ffffff;
+      padding: 16px 20px;
+      border-bottom: 1px solid #d0d0d0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .toolbar .title-zone {
+      font-weight: 600;
+      font-size: 15px;
+      margin-right: auto;
+      color: #444;
+    }
+    .toolbar button {
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity 0.15s, transform 0.05s;
+    }
+    .toolbar button:hover { opacity: 0.85; }
+    .toolbar button:active { transform: translateY(1px); }
+    .toolbar button.primary {
+      background: #213b8a;
+      color: white;
+    }
+    .toolbar button.secondary {
+      background: #e6e8ec;
+      color: #333;
+    }
+
+    /* Zone de prévisualisation des étiquettes */
+    .preview {
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .preview-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .iframe-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    /* Taille de l'aperçu = celle de l'étiquette à l'écran (recto: 302×189, verso: 755×472)
+       On prend la plus grande pour que tout rentre sans débordement. */
+    iframe {
+      display: block;
+      border: 1px solid #c5c5c5;
+      width: 760px;
+      height: 480px;
+      background: white;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+      max-width: calc(100vw - 40px);
+    }
+
+    /* ========== Impression ========== */
+    @page { margin: 0; size: 76mm 51mm; }
+
+    @media print {
+      body {
+        margin: 0; padding: 0;
+        background: white !important;
+      }
+      .toolbar, .preview-label { display: none !important; }
+      .preview {
+        padding: 0;
+        display: block;
+      }
+      iframe {
+        display: block;
+        border: 0 !important;
+        box-shadow: none !important;
+        width: 100vw;
+        height: 100vh;
+      }
+      /* Saut de page entre recto et verso quand on imprime les deux */
+      .recto-frame { page-break-after: always; break-after: page; }
+    }
+
+    /* Modes d'impression sélective : on cache l'autre face et on annule le saut de page */
+    body.mode-recto .verso-wrap { display: none !important; }
+    body.mode-recto .recto-frame { page-break-after: auto !important; break-after: auto !important; }
+    body.mode-verso .recto-wrap { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="title-zone">Étiquettes prêtes à imprimer</span>
+  <button class="primary" onclick="imprimer('recto')">Recto seul</button>
+  <button class="primary" onclick="imprimer('verso')">Verso seul</button>
+</div>
+
+<div class="preview">
+  <div class="iframe-wrap recto-wrap">
+    <div class="preview-label">Recto</div>
+    <iframe class="recto-frame" id="frRecto" title="Étiquette recto"></iframe>
+  </div>
+  <div class="iframe-wrap verso-wrap">
+    <div class="preview-label">Verso</div>
+    <iframe class="verso-frame" id="frVerso" title="Étiquette verso"></iframe>
+  </div>
+</div>
+
+<script>
+  // Transmet les paramètres URL (nom, lot, dluo, ingredients, …, w, h) aux deux étiquettes.
+  var search = window.location.search;
+  document.getElementById('frRecto').src = 'etiquette.html' + search;
+  document.getElementById('frVerso').src = 'etiquette.verso.html' + search;
+
+  // Lance l'impression selon le mode demandé : 'all', 'recto' ou 'verso'.
+function imprimer(mode) {
+  var url;
+  if (mode === 'verso') url = 'etiquette.verso.html' + search;
+  else if (mode === 'recto') url = 'etiquette.html' + search;
+
+  if (url) {
+    var w = window.open(url);
+    setTimeout(function () {
+      w.print();
+    }, 2000);
+  } else {
+    setTimeout(function () { window.print(); }, 100);
+  }
+}
+</script>
+
+</body>
+</html>
