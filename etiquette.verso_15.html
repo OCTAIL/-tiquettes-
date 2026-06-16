@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap');
+
+  body { width: 76mm; height: 51mm; background: white; position: relative; }
+
+  .etiquette-fond {
+    width: 76mm;
+    height: 51mm;
+    background-color: #ffffff;
+    padding: 1.5mm;
+    box-sizing: border-box;
+  }
+  .cadre-dore {
+    width: 100%; height: 100%;
+    border: 0.4mm solid #c5a059;
+    color: #222;
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    padding: 2mm 2mm 7mm 2mm;
+    box-sizing: border-box;
+    position: relative;
+    display: flex; flex-direction: column; justify-content: space-evenly;
+  }
+  .title { font-size: 5mm; color: #c5a059; text-align: center; font-weight: bold; text-transform: uppercase; font-family: 'Cormorant Garamond', serif; white-space: nowrap; margin: 0; flex-shrink: 0; }
+  .line { font-size: 2.2mm; line-height: 1.3; margin: 0; flex-shrink: 0; }
+  .label-name { font-weight: bold; color: #c5a059; }
+  .nutrition-block { font-size: 2mm; line-height: 1.3; margin: 0; flex-shrink: 0; }
+  .poids-cell { font-weight: bold; }
+  .footer { position: absolute; bottom: 1.5mm; left: 2mm; right: 2mm; display: flex; justify-content: space-between; font-size: 1.9mm; align-items: baseline; }
+
+  @page { margin: 0; size: 76mm 51mm; }
+
+  @media print {
+    html, body { margin: 0 !important; padding: 0 !important; width: 76mm !important; height: 51mm !important; display: block !important; overflow: hidden !important; }
+    .etiquette-fond { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .cadre-dore { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+<style id="pageSize"></style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  #btnImage {
+    position: fixed; top: 10px; right: 10px; z-index: 99999;
+    padding: 12px 18px; font-size: 16px; font-weight: 600;
+    background: #213b8a; color: #fff; border: 0; border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25); cursor: pointer;
+    font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  @media print { #btnImage { display: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="etiquette-fond">
+    <div class="cadre-dore">
+        <div class="title" id="nom">NOUGAT TRADITIONNEL</div>
+        
+        <div class="line"><span class="label-name">Ingrédients :</span> <span id="ingredients">sucre, sirop de glucose, amandes, miel de lavande, pistaches, blanc d'œuf</span></div>
+        <div class="line"><span class="label-name">Allergènes :</span> <span id="allergenes">amandes, œufs</span></div>
+        
+        <div class="nutrition-block">
+            <span class="label-name">Val. nutritionnelles / 100g :</span> <span id="valeurs">Énergie 1623 kJ / 383 kcal - MG 10,16 g dont AGS 0,81 Glucides 67,92 g dont sucres 53,61 g - Protéines 5,09 g - Sel 0,14 g</span>
+        </div>
+
+        <div class="footer">
+            <div><span class="label-name">Lot :</span> <span id="lot">XXXXXXXX</span></div>
+            <div id="poidsWrap" class="poids-cell"><span class="label-name">Poids env :</span> <span id="poids" class="poids-value">000 g</span></div>
+            <div><span class="label-name">DDM :</span> <span id="dluo">JJ/MM/AAAA</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+
+    function lire(cle) {
+      var v = params.get(cle);
+      if (v === null) return null;
+      try { return decodeURIComponent(v.replace(/\+/g, ' ')); }
+      catch (e) { return v.replace(/\+/g, ' '); }
+    }
+
+    function remplir(id, cle) {
+      var v = lire(cle);
+      if (v !== null && v !== '') {
+        document.getElementById(id).textContent = v;
+        return v;
+      }
+      return null;
+    }
+
+    var nom = remplir('nom', 'nom');
+    if (nom) document.title = nom;
+
+    var ingredientsTxt = lire('ingredients');
+    var allergenesTxt = lire('allergenes');
+    remplir('valeurs', 'valeurs');
+    remplir('lot', 'lot');
+    remplir('dluo', 'dluo');
+
+    // --- Conformité INCO : mettre les allergènes EN GRAS dans la liste des ingrédients ---
+    // L'INCO impose que les allergènes soient mis en évidence dans la liste des ingrédients
+    // (Article 21 / Annexe II du règlement UE 1169/2011).
+    // On applique aussi le gras dans la ligne Allergènes pour renforcer la visibilité.
+    function mettreAllergenesEnGras(texteHtml, allergenesText) {
+      if (!texteHtml || !allergenesText) return texteHtml;
+      // Extraire les mots-clés courts (avant les éventuelles mentions de précaution longues)
+      var tokens = allergenesText.split(/[,;.]/)
+        .map(function(s) { return s.trim(); })
+        .filter(function(s) {
+          if (!s) return false;
+          var lower = s.toLowerCase();
+          if (lower.indexOf('fabriqu') !== -1) return false;
+          if (lower.indexOf('atelier') !== -1) return false;
+          if (lower.indexOf('utilise') !== -1) return false;
+          if (lower.indexOf('peut contenir') !== -1) return false;
+          return s.split(/\s+/).length <= 3 && s.length >= 3 && s.length <= 30;
+        });
+
+      // Dédupliquer les tokens (insensible à la casse)
+      var seen = {};
+      tokens = tokens.filter(function(t) {
+        var key = t.toLowerCase();
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      });
+
+      var result = texteHtml;
+      tokens.forEach(function(token) {
+        var escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Pas de 'g' : on ne met en gras QUE LA PREMIÈRE OCCURRENCE
+        var regex = new RegExp('(^|[^A-Za-z\u00C0-\u00FF])(' + escaped + 's?)(?=[^A-Za-z\u00C0-\u00FF]|$)', 'i');
+        result = result.replace(regex, function(match, before, word) {
+          return before + '<strong>' + word + '</strong>';
+        });
+      });
+      return result;
+    }
+
+    function echapperHTML(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    if (ingredientsTxt) {
+      document.getElementById('ingredients').innerHTML =
+        mettreAllergenesEnGras(echapperHTML(ingredientsTxt), allergenesTxt || '');
+    }
+    if (allergenesTxt) {
+      document.getElementById('allergenes').innerHTML =
+        mettreAllergenesEnGras(echapperHTML(allergenesTxt), allergenesTxt);
+    }
+
+    // --- Poids : présent seulement pour le conditionnement ---
+    var poids = lire('poids');
+    var poidsValeurG = 0;
+    if (poids !== null && poids !== '') {
+      document.getElementById('poids').textContent = poids;
+      // Extraire la valeur numérique en grammes pour calculer la taille requise
+      var m = poids.match(/(\d+(?:[.,]\d+)?)\s*(kg|g)/i);
+      if (m) {
+        poidsValeurG = parseFloat(m[1].replace(',', '.'));
+        if (m[2].toLowerCase() === 'kg') poidsValeurG *= 1000;
+      }
+    } else {
+      document.getElementById('poidsWrap').style.display = 'none';
+    }
+
+    // --- Dimensions de l'étiquette : ?w=76&h=50 (mm) ---
+    var w = parseFloat(params.get('w')) || 76;
+    var h = parseFloat(params.get('h')) || 50;
+    function vwmm(x) { return (x * w / 100).toFixed(3) + 'mm'; }
+
+    // --- Taille du poids selon Décret 78-166 (hauteur des chiffres) ---
+    // ≤ 50g : 2mm | 50-200g : 3mm | 200g-1kg : 4mm | >1kg : 6mm
+    // font-size ≈ hauteur_chiffre / 0.72 (cap-height d'une police)
+    var poidsFontMM;
+    if (poidsValeurG <= 50) poidsFontMM = 2.8;
+    else if (poidsValeurG <= 200) poidsFontMM = 4.2;   // chiffres ≥ 3 mm
+    else if (poidsValeurG <= 1000) poidsFontMM = 5.6;  // chiffres ≥ 4 mm
+    else poidsFontMM = 8.4;                            // chiffres ≥ 6 mm
+
+    // --- Auto-ajustement du titre : réduit la taille juste assez pour tenir dans le cadre ---
+    // Les noms courts gardent 5 mm ; les noms longs (ex. "NOUGAT CARAMEL BEURRE SALE") rétrécissent.
+    function ajusterTitre() {
+      var el = document.getElementById('nom');
+      if (!el) return;
+      el.style.whiteSpace = 'nowrap';
+      var taille = 5.0;                 // taille de référence (mm)
+      el.style.fontSize = taille + 'mm';
+      var secu = 0;
+      while (el.scrollWidth > el.clientWidth && taille > 2.6 && secu < 80) {
+        taille -= 0.1;
+        el.style.fontSize = taille + 'mm';
+        secu++;
+      }
+    }
+    ajusterTitre();
+    window.ajusterTitre = ajusterTitre;
+    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(ajusterTitre); }
+    window.addEventListener('load', ajusterTitre);
+  })();
+</script>
+
+<button id="btnImage" type="button">📄 Enregistrer le PDF</button>
+<script>
+  document.getElementById('btnImage').addEventListener('click', function () {
+    var btn = this;
+    btn.textContent = '⏳ Préparation…';
+    if (window.ajusterTitre) { try { window.ajusterTitre(); } catch (e) {} }
+    var cible = document.querySelector('.etiquette-fond');
+    html2canvas(cible, { scale: 5, backgroundColor: '#ffffff', useCORS: true }).then(function (canvas) {
+      var imgData = canvas.toDataURL('image/png');
+      var el = document.getElementById('nom');
+      var nom = ((el && el.textContent) || 'etiquette').trim().replace(/\s+/g, '_');
+      var jsPDF = window.jspdf.jsPDF;
+      var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [76, 51] });
+      doc.addImage(imgData, 'PNG', 0, 0, 76, 51);
+      doc.save(nom + '_verso.pdf');
+      btn.textContent = '✅ PDF enregistré';
+      setTimeout(function () { btn.textContent = '📄 Enregistrer le PDF'; }, 2500);
+    }).catch(function (e) {
+      btn.textContent = '❌ Erreur';
+      console.error(e);
+    });
+  });
+</script>
+</body>
+</html>
